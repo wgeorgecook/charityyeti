@@ -44,7 +44,7 @@ func main() {
 	// tweet object as it comes
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
-		respondToTweet(tweet)
+		generateResponse(tweet)
 	}
 
 	fmt.Println("Starting Stream")
