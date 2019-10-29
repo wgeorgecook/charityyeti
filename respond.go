@@ -17,6 +17,12 @@ func respondToTweet(username string, honorary string, tweetID int64) error {
 		donateLink := "https://www.pih.org/vlogbrothers-support-maternal-health"
 		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", username, honorary, donateLink)
 		log.Print(tweetText)
+
+		_, _, err := client.Statuses.Update(tweetText, nil)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
 

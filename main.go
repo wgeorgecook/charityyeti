@@ -12,6 +12,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var client *twitter.Client
+
 func main() {
 	// Load environment variables from .env file
 	log.Print("Loading env variables")
@@ -25,7 +27,7 @@ func main() {
 	config := oauth1.NewConfig(os.Getenv("CONSUMER_KEY"), os.Getenv("CONSUMER_SECRET"))
 	token := oauth1.NewToken(os.Getenv("ACCESS_TOKEN"), os.Getenv("ACCESS_SECRET"))
 	httpClient := config.Client(oauth1.NoContext, token)
-	client := twitter.NewClient(httpClient)
+	client = twitter.NewClient(httpClient)
 
 	// Verify we've connected to Twitter
 	verifyParams := &twitter.AccountVerifyParams{
