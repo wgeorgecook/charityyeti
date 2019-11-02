@@ -3,14 +3,23 @@ package main
 import (
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
 	"github.com/joho/godotenv"
 )
 
-// client is the global twitter client for interations
+// type for building url params when we send a tweet
+type tweetData struct {
+	screenname rune
+	honorary   rune
+	replyToURL rune
+}
+
 var client *twitter.Client
+var stream *twitter.Stream
 
 func main() {
 
@@ -28,6 +37,18 @@ func main() {
 	httpClient := config.Client(oauth1.NoContext, token)
 	client = twitter.NewClient(httpClient)
 
-	listen(client)
+	// Opens the Twitter feed for listening and sending initial tweet response
+	go listen(client)
 
+	// Starts the server that responds after donation
+	go startServer()
+
+	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
+	ch := make(chan os.Signal)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+	log.Println(<-ch)
+
+	// Stop the stream
+	log.Printf("Stopping stream")
+	stream.Stop()
 }

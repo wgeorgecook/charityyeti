@@ -18,7 +18,7 @@ func respondToTweet(username string, honorary string, tweetID int64) error {
 		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", username, honorary, donateLink)
 		log.Print(tweetText)
 
-		// Uncomment this block to actually tweet stuff
+		// TODO: Uncomment this block to actually tweet stuff
 		// _, _, err := client.Statuses.Update(tweetText, nil)
 		// if err != nil {
 		// 	return err
