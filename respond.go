@@ -14,16 +14,17 @@ import (
 // In Health
 func respondToTweet(username string, honorary string, tweetID int64) error {
 	if honorary != "" {
-		donateLink := "https://www.pih.org/vlogbrothers-support-maternal-health"
+		donateLink := "https://donate.pih.org/page/contribute/maternal-health-sierra-leone"
 		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", username, honorary, donateLink)
 		log.Print(tweetText)
 
-		_, _, err := client.Statuses.Update(tweetText, nil)
-		if err != nil {
-			return err
-		}
+		// Uncomment this block to actually tweet stuff
+		// _, _, err := client.Statuses.Update(tweetText, nil)
+		// if err != nil {
+		// 	return err
+		// }
 
-		return nil
+		// return nil
 	}
 
 	return errors.New("No honorary to respond to")
@@ -37,5 +38,9 @@ func generateResponse(incomingTweet *twitter.Tweet) {
 	honorary := incomingTweet.InReplyToScreenName
 	tweetID := incomingTweet.ID
 
-	respondToTweet(user.ScreenName, honorary, tweetID)
+	err := respondToTweet(user.ScreenName, honorary, tweetID)
+
+	if err != nil {
+		log.Printf(err.Error())
+	}
 }
