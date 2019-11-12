@@ -23,6 +23,17 @@ var client *twitter.Client
 var stream *twitter.Stream
 var sendResponses bool
 
+func init() {
+	flag.BoolVar(&sendResponses, "sendResponses", false, "set to true to respond to tweets")
+	flag.Parse()
+
+	if sendResponses {
+		log.Print("WRITE MODE IS ENABLED")
+	} else {
+		log.Print("No write access. This is a dry run.")
+	}
+}
+
 func main() {
 
 	// Load environment variables from .env file
@@ -41,8 +52,6 @@ func main() {
 
 	// Opens the Twitter feed for listening and sending initial tweet response
 	// Must set writeable=true for write access
-	flag.BoolVar(&sendResponses, "writeable", false, "set to true to respond to tweets")
-	flag.Parse()
 	go listen(client)
 
 	// Starts the server that responds after donation

@@ -16,7 +16,6 @@ func respondToTweet(username string, honorary string, tweetID int64) error {
 	if honorary != "" {
 		donateLink := "https://donate.pih.org/page/contribute/maternal-health-sierra-leone"
 		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", username, honorary, donateLink)
-		log.Print(tweetText)
 
 		if sendResponses {
 			log.Print("Actually sending this!")
@@ -25,6 +24,8 @@ func respondToTweet(username string, honorary string, tweetID int64) error {
 				return err
 			}
 		}
+
+		log.Print(tweetText)
 
 		return nil
 	}
