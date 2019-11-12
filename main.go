@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -20,6 +21,7 @@ type tweetData struct {
 
 var client *twitter.Client
 var stream *twitter.Stream
+var sendResponses bool
 
 func main() {
 
@@ -38,6 +40,9 @@ func main() {
 	client = twitter.NewClient(httpClient)
 
 	// Opens the Twitter feed for listening and sending initial tweet response
+	// Must set writeable=true for write access
+	flag.BoolVar(&sendResponses, "writeable", false, "set to true to respond to tweets")
+	flag.Parse()
 	go listen(client)
 
 	// Starts the server that responds after donation

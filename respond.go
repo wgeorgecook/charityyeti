@@ -18,13 +18,15 @@ func respondToTweet(username string, honorary string, tweetID int64) error {
 		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", username, honorary, donateLink)
 		log.Print(tweetText)
 
-		// TODO: Uncomment this block to actually tweet stuff
-		// _, _, err := client.Statuses.Update(tweetText, nil)
-		// if err != nil {
-		// 	return err
-		// }
+		if sendResponses {
+			log.Print("Actually sending this!")
+			_, _, err := client.Statuses.Update(tweetText, nil)
+			if err != nil {
+				return err
+			}
+		}
 
-		// return nil
+		return nil
 	}
 
 	return errors.New("No honorary to respond to")
