@@ -16,6 +16,7 @@ import (
 // TODO: Graceful shutdown on http server
 // TODO: Graceful panic handling
 // TODO: Better logging (I particularly like Zap)
+// TODO: Queuing for tweets
 
 // type for building url params when we send a tweet
 type tweetData struct {
