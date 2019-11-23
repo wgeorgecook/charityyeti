@@ -18,11 +18,11 @@ import (
 // TODO: Queuing for tweets
 
 // type for building url params when we send a tweet
-type tweetData struct {
-	screenname string
-	honorary   string
-	replyToURL string
-	donationValue string
+type successfulDonationData struct {
+	invoker          string
+	honorary         string
+	inReplyToTweetID int64
+	donationValue    string
 }
 
 var client *twitter.Client

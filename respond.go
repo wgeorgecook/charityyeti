@@ -35,10 +35,24 @@ func respondToInvocation(username string, honorary string, tweetID int64) error 
 // respondToDonation gets called after a successful donation. It parses the
 // data sent from the server to make sure that our responses get sent to the
 // original invocation tweet
-// TODO: Implement this
-func respondToDonation(tweet tweetData) error {
-	log.Debugf(fmt.Sprintf("Received data: %+v", tweet))
-	return errors.New("responding to donations not currently implemented")
+func respondToDonation(tweet successfulDonationData) error {
+	tweetText := fmt.Sprintf("Good news, %v! %v thought your tweet was so great, they donated $%v to Partner's in Health on your behalf!", tweet.honorary, tweet.invoker, tweet.donationValue)
+	log.Debugf(fmt.Sprintf("Tweet to send: %+v", tweetText))
+	log.Debugf(fmt.Sprintf("Responding to: %v", tweet.inReplyToTweetID))
+
+	params := &twitter.StatusUpdateParams{
+		InReplyToStatusID:  tweet.inReplyToTweetID,
+	}
+
+	if sendResponses {
+		log.Warnw("Actually sending this!")
+		_, _, err := client.Statuses.Update(tweetText, params)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // generateResponse parses the tweet from the demux stream, pulls out

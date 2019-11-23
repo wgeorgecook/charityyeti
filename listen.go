@@ -42,7 +42,7 @@ func listen(client *twitter.Client) {
 		log.Fatalf("Can't connect to stream: %v", err)
 	}
 
-	// Run the stream hander in its own goroutine
+	// Run the stream handler in its own goroutine
 	go demux.HandleChan(stream.Messages)
 
 }
