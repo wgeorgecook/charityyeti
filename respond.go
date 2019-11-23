@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/dghubble/go-twitter/twitter"
 )
@@ -18,27 +17,28 @@ func respondToInvocation(username string, honorary string, tweetID int64) error 
 		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", username, honorary, donateLink)
 
 		if sendResponses {
-			log.Print("Actually sending this!")
+			log.Warnw("Actually sending this!")
 			_, _, err := client.Statuses.Update(tweetText, nil)
 			if err != nil {
 				return err
 			}
 		}
 
-		log.Print(tweetText)
+		log.Info(tweetText)
 
 		return nil
 	}
 
-	return errors.New("No honorary to respond to")
+	return errors.New("no honorary to respond to")
 }
 
 // respondToDonation gets called after a successful donation. It parses the
 // data sent from the server to make sure that our responses get sent to the
 // original invocation tweet
 // TODO: Implement this
-func respondToDonation(username string, honorary string, tweetID string, donationValue string) error {
-	return errors.New("Responding to donations not currently implemented")
+func respondToDonation(tweet tweetData) error {
+	log.Debugf(fmt.Sprintf("Received data: %+v", tweet))
+	return errors.New("responding to donations not currently implemented")
 }
 
 // generateResponse parses the tweet from the demux stream, pulls out

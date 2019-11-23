@@ -7,4 +7,5 @@ require (
 	github.com/dghubble/oauth1 v0.6.0
 	github.com/gorilla/mux v1.7.3
 	github.com/joho/godotenv v1.3.0
+	go.uber.org/zap v1.13.0
 )

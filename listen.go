@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/dghubble/go-twitter/twitter"
 )
 
@@ -13,7 +11,7 @@ func listen(client *twitter.Client) {
 		SkipStatus:   twitter.Bool(true),
 		IncludeEmail: twitter.Bool(true),
 	}
-	log.Print("Connecting to Twitter")
+	log.Infow("Connecting to Twitter")
 	_, _, err := client.Accounts.VerifyCredentials(verifyParams)
 	if err != nil {
 		log.Fatal("Could not authenticate to Twitter")
@@ -25,10 +23,13 @@ func listen(client *twitter.Client) {
 	// tweet object as it comes
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
-		generateResponse(tweet)
+		err := generateResponse(tweet)
+		if err != nil {
+			log.Error(err)
+		}
 	}
 
-	log.Print("Starting Stream")
+	log.Infow("Starting Stream")
 
 	// These params configure what we are filtering our string for.
 	// In this case, it's the user we're monitoring
