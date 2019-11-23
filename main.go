@@ -12,6 +12,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// TODO: Handle currency properly on the http server and respondToDonation
+// TODO: Graceful shutdown on http server
+// TODO: Graceful panic handling
+// TODO: Better logging (I particularly like Zap)
+
 // type for building url params when we send a tweet
 type tweetData struct {
 	screenname rune

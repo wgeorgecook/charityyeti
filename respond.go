@@ -8,13 +8,13 @@ import (
 	"github.com/dghubble/go-twitter/twitter"
 )
 
-// respondToTweet receives an incoming tweet from a stream,
+// respondToInvocation receives an incoming tweet from a stream,
 // and will respond to it with a link to donate to either
 // Foundation To Decrease World Suck or directly at Parners
 // In Health
-func respondToTweet(username string, honorary string, tweetID int64) error {
+func respondToInvocation(username string, honorary string, tweetID int64) error {
 	if honorary != "" {
-		donateLink := "https://donate.pih.org/page/contribute/maternal-health-sierra-leone"
+		donateLink := "https://charityyeti.com"
 		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", username, honorary, donateLink)
 
 		if sendResponses {
@@ -33,17 +33,26 @@ func respondToTweet(username string, honorary string, tweetID int64) error {
 	return errors.New("No honorary to respond to")
 }
 
+// respondToDonation gets called after a successful donation. It parses the
+// data sent from the server to make sure that our responses get sent to the
+// original invocation tweet
+// TODO: Implement this
+func respondToDonation(username string, honorary string, tweetID string, donationValue string) error {
+	return errors.New("Responding to donations not currently implemented")
+}
+
 // generateResponse parses the tweet from the demux stream, pulls out
 // the user who sent it, the ID of the originating tweet, and
-// passes it to respondToTweet to send to Twitter
-func generateResponse(incomingTweet *twitter.Tweet) {
+// passes it to respondToInvocation to send to Twitter
+func generateResponse(incomingTweet *twitter.Tweet) error {
 	user := incomingTweet.User
 	honorary := incomingTweet.InReplyToScreenName
 	tweetID := incomingTweet.ID
 
-	err := respondToTweet(user.ScreenName, honorary, tweetID)
-
+	err := respondToInvocation(user.ScreenName, honorary, tweetID)
 	if err != nil {
-		log.Printf(err.Error())
+		return err
 	}
+
+	return nil
 }

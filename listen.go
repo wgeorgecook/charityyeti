@@ -33,7 +33,7 @@ func listen(client *twitter.Client) {
 	// These params configure what we are filtering our string for.
 	// In this case, it's the user we're monitoring
 	filterParams := &twitter.StreamFilterParams{
-		Track:         []string{"@wgeorgecook"},
+		Track:         []string{"@charityyeti"},
 		StallWarnings: twitter.Bool(true),
 	}
 	stream, err = client.Streams.Filter(filterParams)
