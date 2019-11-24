@@ -11,10 +11,10 @@ import (
 // and will respond to it with a link to donate to either
 // Foundation To Decrease World Suck or directly at Parners
 // In Health
-func respondToInvocation(username string, honorary string, tweetID int64) error {
-	if honorary != "" {
+func respondToInvocation(yeti yetiInvokedData) error {
+	if yeti.honorary != "" {
 		donateLink := "https://charityyeti.com"
-		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", username, honorary, donateLink)
+		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", yeti.invoker.ScreenName, yeti.honorary, donateLink)
 
 		if sendResponses {
 			log.Warnw("Actually sending this!")
@@ -36,7 +36,7 @@ func respondToInvocation(username string, honorary string, tweetID int64) error 
 // data sent from the server to make sure that our responses get sent to the
 // original invocation tweet
 func respondToDonation(tweet successfulDonationData) error {
-	tweetText := fmt.Sprintf("Good news, %v! %v thought your tweet was so great, they donated $%v to Partner's in Health on your behalf!", tweet.honorary, tweet.invoker, tweet.donationValue)
+	tweetText := fmt.Sprintf("Good news, %v! %v thought your tweet was so great, they donated $%v to Partner's in Health on your behalf! See https://charityyeti.com for details.", tweet.honorary, tweet.invoker, tweet.donationValue)
 	log.Debugf(fmt.Sprintf("Tweet to send: %+v", tweetText))
 	log.Debugf(fmt.Sprintf("Responding to: %v", tweet.inReplyToTweetID))
 
@@ -51,6 +51,8 @@ func respondToDonation(tweet successfulDonationData) error {
 		if err != nil {
 			return err
 		}
+
+		// TODO: should we retweet the honorary's good tweet? We have the tweet ID.
 	}
 	return nil
 }
@@ -59,11 +61,14 @@ func respondToDonation(tweet successfulDonationData) error {
 // the user who sent it, the ID of the originating tweet, and
 // passes it to respondToInvocation to send to Twitter
 func generateResponse(incomingTweet *twitter.Tweet) error {
-	user := incomingTweet.User
-	honorary := incomingTweet.InReplyToScreenName
-	tweetID := incomingTweet.ID
 
-	err := respondToInvocation(user.ScreenName, honorary, tweetID)
+	yeti := yetiInvokedData{
+		invoker:incomingTweet.User,
+		honorary:incomingTweet.InReplyToScreenName,
+		originalTweetId: incomingTweet.ID,
+	}
+
+	err := respondToInvocation(yeti)
 	if err != nil {
 		return err
 	}

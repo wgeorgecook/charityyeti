@@ -34,6 +34,7 @@ func listen(client *twitter.Client) {
 	// These params configure what we are filtering our string for.
 	// In this case, it's the user we're monitoring
 	filterParams := &twitter.StreamFilterParams{
+		// TODO: Make sure this doesn't hit recursion hell
 		Track:         []string{"@charityyeti"},
 		StallWarnings: twitter.Bool(true),
 	}

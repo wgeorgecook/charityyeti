@@ -17,6 +17,13 @@ import (
 // TODO: Graceful panic handling
 // TODO: Queuing for tweets
 
+// type to gather tweet data from an invocation of @CharityYeti
+type yetiInvokedData struct {
+	invoker *twitter.User
+	honorary string
+	originalTweetId int64
+}
+
 // type for building url params when we send a tweet
 type successfulDonationData struct {
 	invoker          string
