@@ -45,6 +45,7 @@ type successfulDonationData struct {
 var client *twitter.Client
 var stream *twitter.Stream
 var sendResponses bool
+var retweetGoods bool
 var log *zap.SugaredLogger
 var cfg config
 
@@ -57,6 +58,7 @@ func init() {
 
 	// Parse command line flags
 	flag.BoolVar(&sendResponses, "sendResponses", false, "set to true to respond to tweets")
+	flag.BoolVar(&retweetGoods, "retweetGoods", false, "set to true to retweet the tweets that get the Yeti invoked on them")
 	flag.Parse()
 	if sendResponses {
 		log.Infow("WRITE MODE IS ENABLED")

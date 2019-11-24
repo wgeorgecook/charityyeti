@@ -52,7 +52,15 @@ func respondToDonation(tweet successfulDonationData) error {
 			return err
 		}
 
-		// TODO: should we retweet the honorary's good tweet? We have the tweet ID.
+		// TODO: this needs testing
+		if retweetGoods {
+			log.Warnw("We're retweeting the invoked tweet. We might break twitter TOS for this.")
+			rtParams := &twitter.StatusRetweetParams{}
+			_, _, err := client.Statuses.Retweet(tweet.inReplyToTweetID, rtParams)
+			if err != nil {
+				log.Errorf("Could not retweet: %v", err)
+			}
+		}
 	}
 	return nil
 }
