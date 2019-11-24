@@ -14,7 +14,7 @@ func startServer() {
 	log.Info("New server started")
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", parseResponse)
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(cfg.Port, router))
 }
 
 // parseResponse captures the get params off the incoming request

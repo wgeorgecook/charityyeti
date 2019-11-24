@@ -2,13 +2,14 @@ package main
 
 import (
 	"flag"
+	"github.com/joho/godotenv"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/caarlos0/env/v6"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
-	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
 
@@ -16,6 +17,15 @@ import (
 // TODO: Graceful shutdown on http server
 // TODO: Graceful panic handling
 // TODO: Queuing for tweets
+
+// type to hold environment variables
+type config struct {
+	ConsumerKey string `env:"CONSUMER_KEY"`
+	ConsumerSecret string `env:"CONSUMER_SECRET"`
+	AccessToken string `env:"ACCESS_TOKEN"`
+	AccessSecret string `env:"ACCESS_SECRET"`
+	Port string `env:"PORT" envDefault:":8080"`
+}
 
 // type to gather tweet data from an invocation of @CharityYeti
 type yetiInvokedData struct {
@@ -36,6 +46,7 @@ var client *twitter.Client
 var stream *twitter.Stream
 var sendResponses bool
 var log *zap.SugaredLogger
+var cfg config
 
 func init() {
 	// Configure logging
@@ -52,9 +63,6 @@ func init() {
 	} else {
 		log.Infow("No write access. This is a dry run.")
 	}
-}
-
-func main() {
 
 	// Load environment variables from .env file
 	log.Infow("Loading env variables")
@@ -63,10 +71,19 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
+	// Set environmental variables
+	cfg = config{}
+	if err := env.Parse(&cfg); err != nil {
+		log.Errorf("%+v\n", err)
+	}
+	log.Infow("Environment variables set")
+}
+
+func main() {
 	// Configure global Twitter client
 	log.Infow("Configuring Twitter client")
-	config := oauth1.NewConfig(os.Getenv("CONSUMER_KEY"), os.Getenv("CONSUMER_SECRET"))
-	token := oauth1.NewToken(os.Getenv("ACCESS_TOKEN"), os.Getenv("ACCESS_SECRET"))
+	config := oauth1.NewConfig(cfg.ConsumerKey, cfg.ConsumerSecret)
+	token := oauth1.NewToken(cfg.AccessToken, cfg.AccessSecret )
 	httpClient := config.Client(oauth1.NoContext, token)
 	client = twitter.NewClient(httpClient)
 
