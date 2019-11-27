@@ -38,10 +38,10 @@ func respondToInvocation(yeti yetiInvokedData) error {
 func respondToDonation(tweet successfulDonationData) error {
 	tweetText := fmt.Sprintf("Good news, %v! %v thought your tweet was so great, they donated $%v to Partner's in Health on your behalf! See https://charityyeti.com for details.", tweet.honorary, tweet.invoker, tweet.donationValue)
 	log.Debugf(fmt.Sprintf("Tweet to send: %+v", tweetText))
-	log.Debugf(fmt.Sprintf("Responding to: %v", tweet.inReplyToTweetID))
+	log.Debugf(fmt.Sprintf("Responding to: %v", tweet.originalTweetID))
 
 	params := &twitter.StatusUpdateParams{
-		InReplyToStatusID:  tweet.inReplyToTweetID,
+		InReplyToStatusID:  tweet.originalTweetID,
 	}
 
 	if sendResponses {
@@ -56,7 +56,7 @@ func respondToDonation(tweet successfulDonationData) error {
 		if retweetGoods {
 			log.Warnw("We're retweeting the invoked tweet. We might break twitter TOS for this.")
 			rtParams := &twitter.StatusRetweetParams{}
-			_, _, err := client.Statuses.Retweet(tweet.inReplyToTweetID, rtParams)
+			_, _, err := client.Statuses.Retweet(tweet.originalTweetID, rtParams)
 			if err != nil {
 				log.Errorf("Could not retweet: %v", err)
 			}

@@ -36,10 +36,10 @@ type yetiInvokedData struct {
 
 // type for building url params when we send a tweet
 type successfulDonationData struct {
-	invoker          string
-	honorary         string
-	inReplyToTweetID int64
-	donationValue    string
+	invoker         string
+	honorary        string
+	originalTweetID int64
+	donationValue   string
 }
 
 var client *twitter.Client

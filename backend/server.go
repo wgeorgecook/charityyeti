@@ -20,24 +20,28 @@ func startServer() {
 // parseResponse captures the get params off the incoming request
 // We use this to get data following a successful donation
 // Example:
-// localhost:8080?invoker=@wgeorgecook&honorary=@charityyeti&inReplyToTweetID=1197178917825630210&donationValue=5
+// localhost:8080?invoker=@wgeorgecook&honorary=@charityyeti&originalTweetID=1197178917825630210&donationValue=5
 func parseResponse(w http.ResponseWriter, r *http.Request) {
 
-	replyToTweetID, _ := strconv.ParseInt(r.URL.Query()["inReplyToTweetID"][0], 10, 64)
+	// TODO: This allows cross origin responses and is only good for deving
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+
+	originalTweetID, _ := strconv.ParseInt(r.URL.Query()["originalTweetID"][0], 10, 64)
 
 	tweet := successfulDonationData{
 		r.URL.Query()["invoker"][0],
 		r.URL.Query()["honorary"][0],
-		replyToTweetID,
+		originalTweetID,
 		r.URL.Query()["donationValue"][0],
 	}
 
 	log.Infow("Endpoint hit")
 
-	if tweet.invoker == "" || tweet.honorary == "" || tweet.donationValue == "" || tweet.inReplyToTweetID == 0 {
-		fmt.Fprintf(w, "All requests must include 'invoker', 'honorary', and 'inReplyToTweetID', and 'donationValue' params")
+	if tweet.invoker == "" || tweet.honorary == "" || tweet.donationValue == "" || tweet.originalTweetID == 0 {
+		fmt.Fprintf(w, "All requests must include 'invoker', 'honorary', and 'originalTweetID', and 'donationValue' params")
 	} else {
-		fmt.Fprintf(w, fmt.Sprintf("{Data: { invoker: %v, honorary: %v, replyToURL: %v, donationValue: %v}}", tweet.invoker, tweet.honorary, tweet.inReplyToTweetID, tweet.donationValue))
+		fmt.Fprintf(w, fmt.Sprintf("{Data: { invoker: %v, honorary: %v, originalTweetID: %v, donationValue: %v}}", tweet.invoker, tweet.honorary, tweet.originalTweetID, tweet.donationValue))
 		err := respondToDonation(tweet)
 
 		if err != nil {
