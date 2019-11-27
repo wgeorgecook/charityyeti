@@ -1,4 +1,4 @@
-module github.com/wgeorgecook/charitybot
+module github.com/wgeorgecook/charityyeti
 
 go 1.12
 
