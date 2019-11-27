@@ -13,7 +13,7 @@ import (
 // In Health
 func respondToInvocation(yeti yetiInvokedData) error {
 	if yeti.honorary != "" {
-		donateLink := "https://charityyeti.com"
+		donateLink := fmt.Sprintf("https://charityyeti.com?honorary=%v&invoker=%v&originalTweetID=%v", yeti.honorary, yeti.invoker.ScreenName, yeti.originalTweetId)
 		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", yeti.invoker.ScreenName, yeti.honorary, donateLink)
 
 		if sendResponses {
