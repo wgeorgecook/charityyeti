@@ -8,11 +8,13 @@ export default class Donate extends Component {
     const honorary = getParams.get('honorary')
     const invoker = getParams.get('invoker')
     const originalTweetID = getParams.get('originalTweetID')
+    const invokerTweetID = getParams.get('invokerTweetID')
 
     this.setState({
       honorary,
       invoker,
-      originalTweetID
+      originalTweetID,
+      invokerTweetID
     })
 
   }
@@ -27,7 +29,7 @@ export default class Donate extends Component {
   // TODO: We can include all of the different wallet and cash transfer apis
   sendData = (e) => {
     e.preventDefault()
-    fetch(`http://localhost:8080?invoker=${this.state.invoker}&honorary=${this.state.honorary}&originalTweetID=${this.state.originalTweetID}&donationValue=${this.state.donationValue}`)
+    fetch(`http://localhost:8080?invoker=${this.state.invoker}&honorary=${this.state.honorary}&invokerTweetID=${this.state.invokerTweetID}&originalTweetID=${this.state.originalTweetID}&donationValue=${this.state.donationValue}`)
     .then( r => {
       console.log(r)
       if (r.status === 200) {
