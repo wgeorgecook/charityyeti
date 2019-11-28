@@ -31,6 +31,7 @@ export default class Donate extends Component {
     e.preventDefault()
     fetch(`http://localhost:8080?invoker=${this.state.invoker}&honorary=${this.state.honorary}&invokerTweetID=${this.state.invokerTweetID}&originalTweetID=${this.state.originalTweetID}&donationValue=${this.state.donationValue}`)
     .then( r => {
+      // TODO: Handle if unsuccessful and let the user know
       console.log(r)
       if (r.status === 200) {
         this.setState({ 'success': true})
