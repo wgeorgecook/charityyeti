@@ -29,17 +29,19 @@ type config struct {
 
 // type to gather tweet data from an invocation of @CharityYeti
 type yetiInvokedData struct {
-	invoker *twitter.User
-	honorary string
-	originalTweetId int64
+	invoker        *twitter.User
+	honorary       string
+	invokerTweetID int64
+	originalTweetID int64
 }
 
 // type for building url params when we send a tweet
 type successfulDonationData struct {
-	invoker         string
-	honorary        string
+	invoker        string
+	honorary       string
+	invokerTweetID int64
+	donationValue  string
 	originalTweetID int64
-	donationValue   string
 }
 
 var client *twitter.Client
