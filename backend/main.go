@@ -28,6 +28,8 @@ type config struct {
 }
 
 // type to gather tweet data from an invocation of @CharityYeti
+// TODO: Collect the names of the parties involved and not just their
+// TODO: Twitter screen names
 type yetiInvokedData struct {
 	invoker        *twitter.User
 	honorary       string
