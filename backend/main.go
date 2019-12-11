@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,6 +18,7 @@ import (
 // TODO: Graceful shutdown on http server
 // TODO: Graceful panic handling
 // TODO: Queuing for tweets
+// TODO: Does this break if someone invokes on themselves?
 
 // type to hold environment variables
 type config struct {
@@ -25,11 +27,12 @@ type config struct {
 	AccessToken string `env:"ACCESS_TOKEN"`
 	AccessSecret string `env:"ACCESS_SECRET"`
 	Port string `env:"PORT" envDefault:":8080"`
+	ConnectionURI string `env:"MONGO_URI"`
 }
 
 // type to gather tweet data from an invocation of @CharityYeti
-// TODO: Collect the names of the parties involved and not just their
-// TODO: Twitter screen names
+// TODO: Collect the names of the parties involved and not just their Twitter screen names
+// TODO: We get the entire twitter user for the invoker, it might be easy to look up the honorary and save that user too
 type yetiInvokedData struct {
 	invoker        *twitter.User
 	honorary       string
@@ -46,12 +49,14 @@ type successfulDonationData struct {
 	originalTweetID int64
 }
 
-var client *twitter.Client
+var twitterClient *twitter.Client
 var stream *twitter.Stream
 var sendResponses bool
 var retweetGoods bool
 var log *zap.SugaredLogger
 var cfg config
+var mongoClient *mongo.Client
+
 
 func init() {
 	// Configure logging
@@ -83,19 +88,24 @@ func init() {
 		log.Errorf("%+v\n", err)
 	}
 	log.Infow("Environment variables set")
+
+	// configure Mongo
+	log.Infow("Connecting to Mongo")
+	mongoClient = initMongo(cfg.ConnectionURI)
+
 }
 
 func main() {
-	// Configure global Twitter client
-	log.Infow("Configuring Twitter client")
+	// Configure global Twitter twitterClient
+	log.Infow("Configuring Twitter twitterClient")
 	config := oauth1.NewConfig(cfg.ConsumerKey, cfg.ConsumerSecret)
 	token := oauth1.NewToken(cfg.AccessToken, cfg.AccessSecret )
 	httpClient := config.Client(oauth1.NoContext, token)
-	client = twitter.NewClient(httpClient)
+	twitterClient = twitter.NewClient(httpClient)
 
 	// Opens the Twitter feed for listening and sending initial tweet response
 	// Must set writeable=true for write access
-	go listen(client)
+	go listen(twitterClient)
 
 	// Starts the server that responds after donation
 	go startServer()

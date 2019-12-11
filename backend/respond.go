@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
 )
@@ -13,14 +17,33 @@ import (
 // In Health
 func respondToInvocation(yeti yetiInvokedData) error {
 	if yeti.honorary != "" {
-		donateLink := fmt.Sprintf("https://charityyeti.com?honorary=@%v&invoker=@%v&invokerTweetID=%v&originalTweetID=%v", yeti.honorary, yeti.invoker.ScreenName, yeti.invokerTweetID, yeti.originalTweetID)
+		dataID := primitive.NewObjectID()
+		donateLink := fmt.Sprintf("https://charityyeti.com?id=%v", dataID)
 		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", yeti.invoker.ScreenName, yeti.honorary, donateLink)
 
 		params := twitter.StatusUpdateParams{InReplyToStatusID: yeti.invokerTweetID}
 
 		if sendResponses {
+			// create the record in Mongo
+			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+			data := bson.M{
+				"_id":              dataID,
+				"invoker":          yeti.invoker,
+				"honorary":         yeti.honorary,
+				"invokerTweetID":   yeti.invokerTweetID,
+				"originalTweetID":  yeti.originalTweetID,
+			}
+			log.Infow("Creating mongo document")
+			collection := mongoClient.Database("charityyeti-test").Collection("twitterData")
+			_, err := collection.InsertOne(ctx, data)
+
+			if err != nil {
+				log.Errorf(fmt.Sprintf("could not create Mongo document: %v", err))
+			}
+
+			// send the tweet
 			log.Infow("Actually sending this!")
-			_, _, err := client.Statuses.Update(tweetText, &params)
+			_, _, err = twitterClient.Statuses.Update(tweetText, &params)
 			if err != nil {
 				return err
 			}
@@ -48,7 +71,7 @@ func respondToDonation(tweet successfulDonationData) error {
 
 	if sendResponses {
 		log.Infow("Actually sending this!")
-		_, _, err := client.Statuses.Update(tweetText, params)
+		_, _, err := twitterClient.Statuses.Update(tweetText, params)
 
 		if err != nil {
 			return err
@@ -58,7 +81,7 @@ func respondToDonation(tweet successfulDonationData) error {
 		if retweetGoods {
 			log.Infow("We're retweeting the invoked tweet. We might break twitter TOS for this.")
 			rtParams := &twitter.StatusRetweetParams{ID: tweet.originalTweetID}
-			_, _, err := client.Statuses.Retweet(tweet.originalTweetID, rtParams)
+			_, _, err := twitterClient.Statuses.Retweet(tweet.originalTweetID, rtParams)
 			if err != nil {
 				log.Errorf("Could not retweet: %v", err)
 			}
