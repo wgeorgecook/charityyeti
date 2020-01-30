@@ -16,10 +16,10 @@ import (
 // Foundation To Decrease World Suck or directly at Parners
 // In Health
 func respondToInvocation(yeti yetiInvokedData) error {
-	if yeti.honorary != "" {
+	if yeti.honorary.ScreenName != "" {
 		dataID := primitive.NewObjectID()
-		donateLink := fmt.Sprintf("https://charityyeti.com?id=%v", dataID)
-		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", yeti.invoker.ScreenName, yeti.honorary, donateLink)
+		donateLink := fmt.Sprintf("https://charityyeti.com?id=%v", dataID.Hex())
+		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", yeti.invoker.ScreenName, yeti.honorary.ScreenName, donateLink)
 
 		params := twitter.StatusUpdateParams{InReplyToStatusID: yeti.invokerTweetID}
 
@@ -95,9 +95,11 @@ func respondToDonation(tweet successfulDonationData) error {
 // passes it to respondToInvocation to send to Twitter
 func generateResponse(incomingTweet *twitter.Tweet) error {
 
+	honorary := getInReplyToTwitterUser(incomingTweet.InReplyToScreenName)
+
 	yeti := yetiInvokedData{
 		invoker:        incomingTweet.User,
-		honorary:       incomingTweet.InReplyToScreenName,
+		honorary:       honorary,
 		invokerTweetID: incomingTweet.ID,
 		originalTweetID: incomingTweet.InReplyToStatusID,
 	}
@@ -108,4 +110,19 @@ func generateResponse(incomingTweet *twitter.Tweet) error {
 	}
 
 	return nil
+}
+
+
+// getInReplyToTwitterUser takes the screen name of a Twitter user (IE - the honorary on an invoked tweet) and returns
+// the full Twitter user details for that user
+func getInReplyToTwitterUser(sn string) *twitter.User {
+	user, _, err := twitterClient.Users.Show(&twitter.UserShowParams{
+		ScreenName: sn,
+	})
+
+	if err != nil {
+		log.Error("cannot get honorary user details: %v", err)
+	}
+
+	return user
 }
