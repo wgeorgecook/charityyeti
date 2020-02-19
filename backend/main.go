@@ -47,6 +47,16 @@ type successfulDonationData struct {
 	originalTweetID int64
 }
 
+// data we keep in Mongo
+type charityYetiData struct {
+	ID string `json:"_id" bson:"_id"`
+	OriginalTweetID int `json:"originalTweetID" bson:"originalTweetID"`
+	InvokerTweetID int `json:"invokerTweetID" bson:"invokerTweetID"`
+	Invoker twitter.User `json:"invoker" bson:"invoker"`
+	Honorary twitter.User `json:"honorary" bson:"honorary"`
+	DonationValue int `json:"donationValue" bson:"donationValue"`
+}
+
 var twitterClient *twitter.Client
 var stream *twitter.Stream
 var sendResponses bool
