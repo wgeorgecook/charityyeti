@@ -18,7 +18,7 @@ func startServer() {
 	router.HandleFunc("/donate", parseResponse)
 	router.HandleFunc("/get", getRecord)
 	router.HandleFunc("/update", updateRecord)
-	log.Fatal(http.ListenAndServe(cfg.Port, router))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("127.0.0.1:%v",cfg.Port), router))
 }
 
 // parseResponse captures the get params off the incoming request
