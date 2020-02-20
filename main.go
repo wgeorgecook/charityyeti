@@ -40,18 +40,18 @@ type yetiInvokedData struct {
 
 // type for building url params when we send a tweet
 type successfulDonationData struct {
-	invoker        string
-	honorary       string
-	invokerTweetID int64
-	donationValue  string
+	invoker         string
+	honorary        string
+	donationValue   int
+	invokerTweetID  int64
 	originalTweetID int64
 }
 
 // data we keep in Mongo
 type charityYetiData struct {
 	ID string `json:"_id" bson:"_id"`
-	OriginalTweetID int `json:"originalTweetID" bson:"originalTweetID"`
-	InvokerTweetID int `json:"invokerTweetID" bson:"invokerTweetID"`
+	OriginalTweetID int64 `json:"originalTweetID" bson:"originalTweetID"`
+	InvokerTweetID int64 `json:"invokerTweetID" bson:"invokerTweetID"`
 	Invoker twitter.User `json:"invoker" bson:"invoker"`
 	Honorary twitter.User `json:"honorary" bson:"honorary"`
 	DonationValue int `json:"donationValue" bson:"donationValue"`

@@ -3,11 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
 // startServer spins up an http listener for this service on the
@@ -15,44 +13,58 @@ import (
 func startServer() {
 	log.Info("New server started")
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/donate", parseResponse)
+	router.HandleFunc("/donate", goodDonation)
 	router.HandleFunc("/get", getRecord)
 	router.HandleFunc("/update", updateRecord)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v",cfg.Port), router))
 }
 
-// parseResponse captures the get params off the incoming request
-// We use this to get data following a successful donation
-// Example:
-// http://localhost:3000/?honorary=@3leero&invoker=@WGeorgeCook&invokerTweetID=1199909334777352193&originalTweetID=815781148689395712
-// TODO: We want to just be passing around uuids. Just look for the id=ObjectID() on the URL and do a db lookup to
-// TODO: get this information from that db record
-func parseResponse(w http.ResponseWriter, r *http.Request) {
+// goodDonation captures the body off an incoming request and sets up the struct necessary to respond to a successful
+// donation event.
+func goodDonation(w http.ResponseWriter, r *http.Request) {
 
-	// TODO: This allows cross origin responses and is only good for deving
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	log.Info("Good donation received - responding to it")
 
-	originalTweetID, _ := strconv.ParseInt(r.URL.Query()["originalTweetID"][0], 10, 64)
-	invokerTweetID, _ := strconv.ParseInt(r.URL.Query()["invokerTweetID"][0], 10, 64)
-
-	tweet := successfulDonationData{
-		r.URL.Query()["invoker"][0],
-		r.URL.Query()["honorary"][0],
-		invokerTweetID,
-		r.URL.Query()["donationValue"][0],
-		originalTweetID,
+	// Read the incoming request body
+	body, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		log.Error(err)
+		if _, werr := w.Write([]byte(fmt.Sprintf("could not read request body: %v", err))); werr != nil {
+			log.Error(werr)
+		}
+		return
 	}
 
-	log.Infow("Endpoint hit")
+	// Unmarshal the request into our charityYetiData struct
+	var c charityYetiData
+	if err := json.Unmarshal(body, &c); err != nil {
+		log.Error(err)
+		if _, werr := w.Write([]byte(fmt.Sprintf("could not marshal request body: %v", err))); werr != nil {
+			log.Error(werr)
+		}
+		return
+	}
 
-	if tweet.invoker == "" || tweet.honorary == "" || tweet.donationValue == "" || tweet.invokerTweetID == 0 || tweet.originalTweetID == 0 {
-		fmt.Fprintf(w, "All requests must include 'invoker', 'honorary', and 'invokerTweetID', 'originalTweetID', and 'donationValue' params")
-	} else {
-		fmt.Fprintf(w, fmt.Sprintf("{Data: { invoker: %v, honorary: %v, invokerTweetID: %v, originalTweetID: %v, donationValue: %v}}", tweet.invoker, tweet.honorary, tweet.invokerTweetID, tweet.originalTweetID, tweet.donationValue))
-		err := respondToDonation(tweet)
+	// set the values for a successfulDonationData struct
+	tweet := successfulDonationData{
+		invoker: c.Invoker.ScreenName,
+		honorary: c.Honorary.ScreenName,
+		donationValue: c.DonationValue,
+		invokerTweetID: c.InvokerTweetID,
+		originalTweetID: c.OriginalTweetID,
+	}
+
+		log.Info(fmt.Sprintf(
+			"{Data: { invoker: %v, honorary: %v, invokerTweetID: %v, originalTweetID: %v, donationValue: %v}}",
+				tweet.invoker, tweet.honorary, tweet.invokerTweetID, tweet.originalTweetID, tweet.donationValue))
+
+		err = respondToDonation(tweet)
 
 		if err != nil {
 			log.Error(err)
+			if _, err := w.Write([]byte(fmt.Sprintf("could not respond to donation: %v", err))); err != nil {
+				log.Error(err)
 		}
 	}
 }
