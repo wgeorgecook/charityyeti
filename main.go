@@ -87,7 +87,7 @@ func init() {
 	log.Infow("Loading env variables")
 	err := godotenv.Load()
 	if err != nil {
-		log.Errorf("Error loading .env file")
+		log.Errorf("Error loading .env file: %v", err)
 	}
 
 	// Set environmental variables
@@ -95,7 +95,7 @@ func init() {
 	if err := env.Parse(&cfg); err != nil {
 		log.Errorf("%+v\n", err)
 	}
-	log.Infow("Environment variables set")
+	log.Infof("Environment variables set: %+v", cfg)
 
 	// configure Mongo
 	log.Infow("Connecting to Mongo")
