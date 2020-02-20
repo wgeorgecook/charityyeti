@@ -1,14 +1,9 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-
-	// "go.mongodb.org/mongo-driver/bson/primitive"
-	"go.uber.org/zap"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -20,8 +15,9 @@ import (
 func startServer() {
 	log.Info("New server started")
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", parseResponse)
+	router.HandleFunc("/donate", parseResponse)
 	router.HandleFunc("/get", getRecord)
+	router.HandleFunc("/update", updateRecord)
 	log.Fatal(http.ListenAndServe(cfg.Port, router))
 }
 
@@ -61,45 +57,90 @@ func parseResponse(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// takes a mongo _id and returns the collection with that data
-func getRecord(w http.ResponseWriter, r *http.Request) {
-	log.Info("Incoming request to get Mongo document")
 
-	// we expect the _id of the Mongo document to come in as a query param
-	id := r.URL.Query()["id"]
+// updateRecord takes an update to a Mongo document in the body of the request and returns the pre-updated
+// document in the body of the response
+func updateRecord(w http.ResponseWriter, r *http.Request) {
+	log.Info("Incoming request to update Mongo document")
 
-	// query params are found as map[string], so a length of 0 means the id param wasn't found
-	if len(id) == 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		if _, err := w.Write([]byte("no id given on request but id query parameter is required")); err != nil {
-			fmt.Printf(err.Error())
+	// Read out the request body into a byte stream we can digest
+	body, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		// we can't read the incoming body
+		if _, err := w.Write([]byte(err.Error())); err != nil {
+			log.Error(err)
 		}
+		return
 	}
 
-	log.Infow("Getting record", zap.String("id", id[0]))
+	// Unmarshal the request body bytes into our Mongo document struct
+	var update charityYetiData
+	if err := json.Unmarshal(body, &update); err != nil {
+		// we can't unmarshal the body into our struct
+		log.Error(err)
+		if _, err := w.Write([]byte(err.Error())); err != nil {
+			log.Error(err)
+		}
+		return
+	}
 
-	collection := mongoClient.Database("charityyeti-test").Collection("twitterData")
-
-	// create an OID bson primitive based on the ID that comes in on the request
-	oid, err := primitive.ObjectIDFromHex(id[0])
+	// Pass the update into our actual update function
+	updated, err := updateDocument(update)
 	if err != nil {
+		// we we're able to update the Mongo document for whatever reason
+		log.Error(err)
+		if _, err := w.Write([]byte(err.Error())); err != nil {
+			log.Error(err)
+		}
+		return
+	}
+
+	// transform the data from Mongo to a byte map so we can write it back on the request
+	dataBytes, err := json.Marshal(updated)
+	if err != nil {
+		if _, err := w.Write([]byte(fmt.Sprintf("error marshaling Mongo document: %v", err))); err != nil {
+			log.Error(err)
+		}
+	}
+	if _, err := w.Write(dataBytes); err != nil {
 		log.Error(err)
 	}
 
-	// find and unmarshal the document to a struct we can return
-	var data charityYetiData
-	filter := bson.M{"_id": oid}
-	err = collection.FindOne(context.Background(), filter).Decode(&data)
+}
+
+// getRecord takes a mongo _id in the body of the request and returns the collection with that data on the response body
+func getRecord(w http.ResponseWriter, r *http.Request) {
+	log.Info("Incoming request to get Mongo document")
+
+	id, err := extractID(w, r)
 	if err != nil {
-		if _, err := w.Write([]byte(fmt.Sprintf("could not decode Mongo data: %v", err))); err != nil {
+		log.Error(err)
+		// there's no ID on the request so we return early here.
+		if _, err := w.Write([]byte(err.Error())); err != nil {
 			log.Error(err)
 		}
+		return
+	}
+
+	data, err := getDocument(id)
+	if err != nil {
+		log.Error(err)
+
+		// there's no found document, so we return early here
+		if _, err := w.Write([]byte(fmt.Sprintf("error getting Mongo document: %v", err))); err != nil {
+			log.Error(err)
+		}
+
+		return
 	}
 
 	// transform the data from Mongo to a byte map so we can write it back on the request
 	dataBytes, err := json.Marshal(data)
 	if err != nil {
-		log.Error(err)
+		if _, err := w.Write([]byte(fmt.Sprintf("error marshaling Mongo document: %v", err))); err != nil {
+			log.Error(err)
+		}
 	}
 	if _, err := w.Write(dataBytes); err != nil {
 		log.Error(err)
