@@ -16,7 +16,7 @@ func startServer() {
 	router.HandleFunc("/donate", goodDonation)
 	router.HandleFunc("/get", getRecord)
 	router.HandleFunc("/update", updateRecord)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v",cfg.Port), router))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", cfg.Port), router))
 }
 
 // goodDonation captures the body off an incoming request and sets up the struct necessary to respond to a successful
@@ -48,27 +48,26 @@ func goodDonation(w http.ResponseWriter, r *http.Request) {
 
 	// set the values for a successfulDonationData struct
 	tweet := successfulDonationData{
-		invoker: c.Invoker.ScreenName,
-		honorary: c.Honorary.ScreenName,
-		donationValue: c.DonationValue,
-		invokerTweetID: c.InvokerTweetID,
+		invoker:         c.Invoker.ScreenName,
+		honorary:        c.Honorary.ScreenName,
+		donationValue:   c.DonationValue,
+		invokerTweetID:  c.InvokerTweetID,
 		originalTweetID: c.OriginalTweetID,
 	}
 
-		log.Info(fmt.Sprintf(
-			"{Data: { invoker: %v, honorary: %v, invokerTweetID: %v, originalTweetID: %v, donationValue: %v}}",
-				tweet.invoker, tweet.honorary, tweet.invokerTweetID, tweet.originalTweetID, tweet.donationValue))
+	log.Info(fmt.Sprintf(
+		"{Data: { invoker: %v, honorary: %v, invokerTweetID: %v, originalTweetID: %v, donationValue: %v}}",
+		tweet.invoker, tweet.honorary, tweet.invokerTweetID, tweet.originalTweetID, tweet.donationValue))
 
-		err = respondToDonation(tweet)
+	err = respondToDonation(tweet)
 
-		if err != nil {
+	if err != nil {
+		log.Error(err)
+		if _, err := w.Write([]byte(fmt.Sprintf("could not respond to donation: %v", err))); err != nil {
 			log.Error(err)
-			if _, err := w.Write([]byte(fmt.Sprintf("could not respond to donation: %v", err))); err != nil {
-				log.Error(err)
 		}
 	}
 }
-
 
 // updateRecord takes an update to a Mongo document in the body of the request and returns the pre-updated
 // document in the body of the response

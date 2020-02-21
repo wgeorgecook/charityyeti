@@ -22,19 +22,20 @@ import (
 
 // type to hold environment variables
 type config struct {
-	ConsumerKey string `env:"CONSUMER_KEY"`
+	ConsumerKey    string `env:"CONSUMER_KEY"`
 	ConsumerSecret string `env:"CONSUMER_SECRET"`
-	AccessToken string `env:"ACCESS_TOKEN"`
-	AccessSecret string `env:"ACCESS_SECRET"`
-	Port string `env:"PORT" envDefault:":8080"`
-	ConnectionURI string `env:"MONGO_URI"`
+	AccessToken    string `env:"ACCESS_TOKEN"`
+	AccessSecret   string `env:"ACCESS_SECRET"`
+	Port           string `env:"PORT" envDefault:":8080"`
+	ConnectionURI  string `env:"MONGO_URI"`
+	Database       string `env:"DATABASE"`
 }
 
 // type to gather tweet data from an invocation of @CharityYeti
 type yetiInvokedData struct {
-	invoker        *twitter.User
-	honorary       *twitter.User
-	invokerTweetID int64
+	invoker         *twitter.User
+	honorary        *twitter.User
+	invokerTweetID  int64
 	originalTweetID int64
 }
 
@@ -49,12 +50,12 @@ type successfulDonationData struct {
 
 // data we keep in Mongo
 type charityYetiData struct {
-	ID string `json:"_id" bson:"_id"`
-	OriginalTweetID int64 `json:"originalTweetID" bson:"originalTweetID"`
-	InvokerTweetID int64 `json:"invokerTweetID" bson:"invokerTweetID"`
-	Invoker twitter.User `json:"invoker" bson:"invoker"`
-	Honorary twitter.User `json:"honorary" bson:"honorary"`
-	DonationValue int `json:"donationValue" bson:"donationValue"`
+	ID              string       `json:"_id" bson:"_id"`
+	OriginalTweetID int64        `json:"originalTweetID" bson:"originalTweetID"`
+	InvokerTweetID  int64        `json:"invokerTweetID" bson:"invokerTweetID"`
+	Invoker         twitter.User `json:"invoker" bson:"invoker"`
+	Honorary        twitter.User `json:"honorary" bson:"honorary"`
+	DonationValue   int          `json:"donationValue" bson:"donationValue"`
 }
 
 var twitterClient *twitter.Client
@@ -65,13 +66,11 @@ var log *zap.SugaredLogger
 var cfg config
 var mongoClient *mongo.Client
 
-
 func init() {
 	// Configure logging
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync() // flushes buffer, if any
 	log = logger.Sugar()
-
 
 	// Parse command line flags
 	flag.BoolVar(&sendResponses, "sendResponses", false, "set to true to respond to tweets")
@@ -107,7 +106,7 @@ func main() {
 	// Configure global Twitter twitterClient
 	log.Infow("Configuring Twitter twitterClient")
 	config := oauth1.NewConfig(cfg.ConsumerKey, cfg.ConsumerSecret)
-	token := oauth1.NewToken(cfg.AccessToken, cfg.AccessSecret )
+	token := oauth1.NewToken(cfg.AccessToken, cfg.AccessSecret)
 	httpClient := config.Client(oauth1.NoContext, token)
 	twitterClient = twitter.NewClient(httpClient)
 

@@ -27,14 +27,14 @@ func respondToInvocation(yeti yetiInvokedData) error {
 			// create the record in Mongo
 			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 			data := bson.M{
-				"_id":              dataID,
-				"invoker":          yeti.invoker,
-				"honorary":         yeti.honorary,
-				"invokerTweetID":   yeti.invokerTweetID,
-				"originalTweetID":  yeti.originalTweetID,
+				"_id":             dataID,
+				"invoker":         yeti.invoker,
+				"honorary":        yeti.honorary,
+				"invokerTweetID":  yeti.invokerTweetID,
+				"originalTweetID": yeti.originalTweetID,
 			}
 			log.Infow("Creating mongo document")
-			collection := mongoClient.Database("charityyeti-test").Collection("twitterData")
+			collection := mongoClient.Database("cfg.Database").Collection("twitterData")
 			_, err := collection.InsertOne(ctx, data)
 
 			if err != nil {
@@ -66,7 +66,7 @@ func respondToDonation(tweet successfulDonationData) error {
 	log.Debugf(fmt.Sprintf("Responding to: %v", tweet.invokerTweetID))
 
 	params := &twitter.StatusUpdateParams{
-		InReplyToStatusID:  tweet.invokerTweetID,
+		InReplyToStatusID: tweet.invokerTweetID,
 	}
 
 	if sendResponses {
@@ -98,9 +98,9 @@ func generateResponse(incomingTweet *twitter.Tweet) error {
 	honorary := getInReplyToTwitterUser(incomingTweet.InReplyToScreenName)
 
 	yeti := yetiInvokedData{
-		invoker:        incomingTweet.User,
-		honorary:       honorary,
-		invokerTweetID: incomingTweet.ID,
+		invoker:         incomingTweet.User,
+		honorary:        honorary,
+		invokerTweetID:  incomingTweet.ID,
 		originalTweetID: incomingTweet.InReplyToStatusID,
 	}
 
@@ -111,7 +111,6 @@ func generateResponse(incomingTweet *twitter.Tweet) error {
 
 	return nil
 }
-
 
 // getInReplyToTwitterUser takes the screen name of a Twitter user (IE - the honorary on an invoked tweet) and returns
 // the full Twitter user details for that user
