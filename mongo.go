@@ -22,7 +22,7 @@ func initMongo(connectionURI string) *mongo.Client {
 }
 
 func getDocument(id string) (*charityYetiData, error) {
-	collection := mongoClient.Database("cfg.Database").Collection("twitterData")
+	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
 
 	// create an OID bson primitive based on the ID that comes in on the request
 	oid, err := primitive.ObjectIDFromHex(id)
@@ -42,7 +42,7 @@ func getDocument(id string) (*charityYetiData, error) {
 }
 
 func updateDocument(u charityYetiData) (*charityYetiData, error) {
-	collection := mongoClient.Database("cfg.Database").Collection("twitterData")
+	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
 
 	// create an OID bson primitive based on the ID that comes in on the request
 	oid, err := primitive.ObjectIDFromHex(u.ID)

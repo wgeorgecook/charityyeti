@@ -29,6 +29,7 @@ type config struct {
 	Port           string `env:"PORT" envDefault:":8080"`
 	ConnectionURI  string `env:"MONGO_URI"`
 	Database       string `env:"DATABASE"`
+	Collection     string `env:"COLLECTION"`
 }
 
 // type to gather tweet data from an invocation of @CharityYeti

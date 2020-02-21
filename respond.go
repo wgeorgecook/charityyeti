@@ -34,7 +34,7 @@ func respondToInvocation(yeti yetiInvokedData) error {
 				"originalTweetID": yeti.originalTweetID,
 			}
 			log.Infow("Creating mongo document")
-			collection := mongoClient.Database("cfg.Database").Collection("twitterData")
+			collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
 			_, err := collection.InsertOne(ctx, data)
 
 			if err != nil {
