@@ -63,3 +63,16 @@ func updateDocument(u charityYetiData) (*charityYetiData, error) {
 
 	return &data, nil
 }
+
+
+func aggregateHighestDonatedTweet() (*charityYetiData, error) {
+	// TODO: return an aggregated collection matched by OriginalTweetID
+	// and sum up all the donationValues that match that OriginalTweetID
+	return nil, nil
+}
+
+func aggregateHighestDonor() (*charityYetiData, error) {
+	// TODO: return an aggregated collection matched by invoker.ScreenName
+	// and sum up all the donationValues that match that invoker.ScreenName
+	return nil, nil
+}

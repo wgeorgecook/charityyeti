@@ -16,6 +16,8 @@ func startServer() {
 	router.HandleFunc("/donate", goodDonation)
 	router.HandleFunc("/get", getRecord)
 	router.HandleFunc("/update", updateRecord)
+	router.HandleFunc("/mostdonatedto", getMostDonatedTo)
+	router.HandleFunc("/highestdonor", getHighestDonor)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", cfg.Port), router))
 }
 
@@ -157,4 +159,25 @@ func getRecord(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 
+}
+
+// getMostDonatedTo finds the tweet with the highest collective donationValue and returns it to the requestor
+func getMostDonatedTo(w http.ResponseWriter, r *http.Request) {
+	aggregate, err := aggregateHighestDonatedTweet()
+	if err != nil {
+		log.Error(err)
+	}
+
+	log.Info(fmt.Sprintf("Found aggreagate: %+v", aggregate))
+}
+
+// getHighestDonor finds the Twitter user screen name who has donated the most across all donated tweets and returns
+// that user to the requester 
+func getHighestDonor(w http.ResponseWriter, r *http.Request) {
+	aggregate, err := aggregateHighestDonor()
+	if err != nil {
+		log.Error(err)
+	}
+
+	log.Info(fmt.Sprintf("Found aggreagate: %+v", aggregate))
 }
