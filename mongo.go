@@ -64,15 +64,65 @@ func updateDocument(u charityYetiData) (*charityYetiData, error) {
 	return &data, nil
 }
 
+// returns an aggregated collection matched by OriginalTweetID
+// and sum up all the donationValues that match that OriginalTweetID
+func aggregateHighestDonatedTweet() ([]bson.M, error) {
+	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
+	match := bson.D{{"$match", bson.D{{"donationValue", bson.D{{"$gt", 0}}}}}}
+	group := bson.D{{"$group", bson.D{{"_id", "$originalTweetID"}, {"total", bson.D{{"$sum", "$donationValue"}}}}}}
 
-func aggregateHighestDonatedTweet() (*charityYetiData, error) {
-	// TODO: return an aggregated collection matched by OriginalTweetID
-	// and sum up all the donationValues that match that OriginalTweetID
-	return nil, nil
+	resultCursor, err := collection.Aggregate(context.Background(), mongo.Pipeline{match, group})
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	var results []bson.M
+	if err = resultCursor.All(context.Background(), &results); err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	return results, nil
 }
 
-func aggregateHighestDonor() (*charityYetiData, error) {
-	// TODO: return an aggregated collection matched by invoker.ScreenName
-	// and sum up all the donationValues that match that invoker.ScreenName
-	return nil, nil
+// TODO: returns an aggregated collection matched by invoker.ScreenName
+// and sum up all the donationValues that match that invoker.ScreenName
+func aggregateHighestDonor() ([]bson.M, error) {
+	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
+	match := bson.D{{"$match", bson.D{{"donationValue", bson.D{{"$gt", 0}}}}}}
+	group := bson.D{{"$group", bson.D{{"_id", "$invoker.screenname"}, {"total", bson.D{{"$sum", "$donationValue"}}}}}}
+
+	resultCursor, err := collection.Aggregate(context.Background(), mongo.Pipeline{match, group})
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	var results []bson.M
+	if err = resultCursor.All(context.Background(), &results); err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	return results, nil
+}
+
+// returns all tweets that have a successful donationValue logged to their document in Mongo
+func aggregateAllDonatedTweets() (*[]charityYetiData, error) {
+	filter := bson.D{{"donationValue", bson.D{{"$gt", 0}}}}
+	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
+	resultCursor, err := collection.Find(context.Background(), filter)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	var results []charityYetiData
+	if err = resultCursor.All(context.Background(), &results); err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	return &results, nil
 }

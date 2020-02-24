@@ -16,6 +16,7 @@ func startServer() {
 	router.HandleFunc("/donate", goodDonation)
 	router.HandleFunc("/get", getRecord)
 	router.HandleFunc("/update", updateRecord)
+	router.HandleFunc("/alldonated", getAllDonatedTweets)
 	router.HandleFunc("/mostdonatedto", getMostDonatedTo)
 	router.HandleFunc("/highestdonor", getHighestDonor)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", cfg.Port), router))
@@ -161,7 +162,32 @@ func getRecord(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// getMostDonatedTo finds the tweet with the highest collective donationValue and returns it to the requestor
+func getAllDonatedTweets(w http.ResponseWriter, r *http.Request) {
+	tweets, err := aggregateAllDonatedTweets()
+	if err != nil {
+		log.Error(err)
+	}
+
+	log.Info(fmt.Sprintf("Donated tweets: %+v", tweets))
+	// marshal the response into a map of our twitter data
+	tweetBytes, err := json.Marshal(tweets)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(500)
+		_, _ = w.Write([]byte(fmt.Sprintf("an internal server error occured: %v", err)))
+		return
+	}
+
+	// write the tweets out on the wire
+	if _, err := w.Write(tweetBytes); err != nil {
+		log.Error(err)
+		return
+	}
+
+}
+
+// getMostDonatedTo finds the tweet with the highest collective donationValue and returns it to the requester
+// note that the `_id` on this response is the originalTweetID from the database
 func getMostDonatedTo(w http.ResponseWriter, r *http.Request) {
 	aggregate, err := aggregateHighestDonatedTweet()
 	if err != nil {
@@ -169,10 +195,24 @@ func getMostDonatedTo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Info(fmt.Sprintf("Found aggreagate: %+v", aggregate))
+
+	aggregateBytes, err := json.Marshal(aggregate)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(500)
+		_, _ = w.Write([]byte(fmt.Sprintf("an internal server error occured: %v", err)))
+		return
+	}
+
+	// write the tweets out on the wire
+	if _, err := w.Write(aggregateBytes); err != nil {
+		log.Error(err)
+		return
+	}
 }
 
 // getHighestDonor finds the Twitter user screen name who has donated the most across all donated tweets and returns
-// that user to the requester 
+// that user to the requester
 func getHighestDonor(w http.ResponseWriter, r *http.Request) {
 	aggregate, err := aggregateHighestDonor()
 	if err != nil {
@@ -180,4 +220,18 @@ func getHighestDonor(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Info(fmt.Sprintf("Found aggreagate: %+v", aggregate))
+
+	aggregateBytes, err := json.Marshal(aggregate)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(500)
+		_, _ = w.Write([]byte(fmt.Sprintf("an internal server error occured: %v", err)))
+		return
+	}
+
+	// write the tweets out on the wire
+	if _, err := w.Write(aggregateBytes); err != nil {
+		log.Error(err)
+		return
+	}
 }

@@ -59,6 +59,11 @@ type charityYetiData struct {
 	DonationValue   int          `json:"donationValue" bson:"donationValue"`
 }
 
+// aggregated Mongo data
+type charityYetiAggregation struct {
+	Map []charityYetiData `bson:"map"`
+}
+
 var twitterClient *twitter.Client
 var stream *twitter.Stream
 var sendResponses bool
