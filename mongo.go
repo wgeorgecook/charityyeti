@@ -66,7 +66,8 @@ func updateDocument(u charityYetiData) (*charityYetiData, error) {
 
 // returns an aggregated collection matched by OriginalTweetID
 // and sum up all the donationValues that match that OriginalTweetID
-func aggregateHighestDonatedTweet() ([]bson.M, error) {
+// TODO: pagination
+func aggregateDonatedTweets() ([]bson.M, error) {
 	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
 	match := bson.D{{"$match", bson.D{{"donationValue", bson.D{{"$gt", 0}}}}}}
 	group := bson.D{{"$group", bson.D{{"_id", "$originalTweetID"}, {"total", bson.D{{"$sum", "$donationValue"}}}}}}
@@ -86,9 +87,10 @@ func aggregateHighestDonatedTweet() ([]bson.M, error) {
 	return results, nil
 }
 
-// TODO: returns an aggregated collection matched by invoker.ScreenName
+// returns an aggregated collection matched by invoker.ScreenName
 // and sum up all the donationValues that match that invoker.ScreenName
-func aggregateHighestDonor() ([]bson.M, error) {
+// TODO: pagination
+func aggregateDonors() ([]bson.M, error) {
 	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
 	match := bson.D{{"$match", bson.D{{"donationValue", bson.D{{"$gt", 0}}}}}}
 	group := bson.D{{"$group", bson.D{{"_id", "$invoker.screenname"}, {"total", bson.D{{"$sum", "$donationValue"}}}}}}
@@ -108,7 +110,7 @@ func aggregateHighestDonor() ([]bson.M, error) {
 	return results, nil
 }
 
-// returns all tweets that have a successful donationValue logged to their document in Mongo
+// returns all data on tweets that have a successful donationValue logged to their document in Mongo
 func aggregateAllDonatedTweets() (*[]charityYetiData, error) {
 	filter := bson.D{{"donationValue", bson.D{{"$gt", 0}}}}
 	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)

@@ -17,8 +17,8 @@ func startServer() {
 	router.HandleFunc("/get", getRecord)
 	router.HandleFunc("/update", updateRecord)
 	router.HandleFunc("/alldonated", getAllDonatedTweets)
-	router.HandleFunc("/mostdonatedto", getMostDonatedTo)
-	router.HandleFunc("/highestdonor", getHighestDonor)
+	router.HandleFunc("/getdonated", getDonatedTweets)
+	router.HandleFunc("/getdonors", getDonors)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", cfg.Port), router))
 }
 
@@ -162,6 +162,7 @@ func getRecord(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// returns an array of all data we have on all tweets with a donationValue to the requester
 func getAllDonatedTweets(w http.ResponseWriter, r *http.Request) {
 	tweets, err := aggregateAllDonatedTweets()
 	if err != nil {
@@ -186,10 +187,11 @@ func getAllDonatedTweets(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// getMostDonatedTo finds the tweet with the highest collective donationValue and returns it to the requester
+// getDonatedTweets finds all tweets with a donationValue and returns an array of tweet IDs and their
+// respective summed donationValues to the requester
 // note that the `_id` on this response is the originalTweetID from the database
-func getMostDonatedTo(w http.ResponseWriter, r *http.Request) {
-	aggregate, err := aggregateHighestDonatedTweet()
+func getDonatedTweets(w http.ResponseWriter, r *http.Request) {
+	aggregate, err := aggregateDonatedTweets()
 	if err != nil {
 		log.Error(err)
 	}
@@ -211,10 +213,11 @@ func getMostDonatedTo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// getHighestDonor finds the Twitter user screen name who has donated the most across all donated tweets and returns
-// that user to the requester
-func getHighestDonor(w http.ResponseWriter, r *http.Request) {
-	aggregate, err := aggregateHighestDonor()
+// getDonors finds all Twitter user screen name who has donated donated tweets and returns
+// that array of user screennames to the requester
+// note that the `_id` on this response is the invoker.screenname from the database
+func getDonors(w http.ResponseWriter, r *http.Request) {
+	aggregate, err := aggregateDonors()
 	if err != nil {
 		log.Error(err)
 	}
