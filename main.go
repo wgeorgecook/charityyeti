@@ -66,6 +66,7 @@ type charityYetiAggregation struct {
 
 var twitterClient *twitter.Client
 var stream *twitter.Stream
+var tweetQueue chan *twitter.Tweet
 var sendResponses bool
 var retweetGoods bool
 var log *zap.SugaredLogger
@@ -116,9 +117,15 @@ func main() {
 	httpClient := config.Client(oauth1.NoContext, token)
 	twitterClient = twitter.NewClient(httpClient)
 
+	// tweetQueue is a channel that holds tweets we've heard while listening to the stream
+	tweetQueue = make(chan *twitter.Tweet)
+
 	// Opens the Twitter feed for listening and sending initial tweet response
 	// Must set writeable=true for write access
 	go listen(twitterClient)
+
+	// starts a worker who processes tweets once Charity Yeti is invoked
+	go processInvocation()
 
 	// Starts the server that responds after donation
 	go startServer()

@@ -23,10 +23,9 @@ func listen(client *twitter.Client) {
 	// tweet object as it comes
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
-		err := generateResponse(tweet)
-		if err != nil {
-			log.Error(err)
-		}
+		// send this tweet to a queue for processing
+		log.Infof("Sending incoming tweet (%v) to channel", tweet.IDStr)
+		tweetQueue <- tweet
 	}
 
 	log.Infow("Starting Stream")
@@ -34,7 +33,6 @@ func listen(client *twitter.Client) {
 	// These params configure what we are filtering our string for.
 	// In this case, it's the user we're monitoring
 	filterParams := &twitter.StreamFilterParams{
-		// TODO: Make sure this doesn't hit recursion hell
 		Track:         []string{"Hey @charityyeti"}, // Makes sure we don't accidentally reply to folks chatting with us
 		StallWarnings: twitter.Bool(true),
 	}
