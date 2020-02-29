@@ -6,12 +6,13 @@ import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 // startServer spins up an http listener for this service on the
 // port and path specified
 func startServer() {
-	log.Info("New server started")
+	// define the new router, define paths, and handlers on the router
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/donate", goodDonation)
 	router.HandleFunc("/get", getRecord)
@@ -19,7 +20,21 @@ func startServer() {
 	router.HandleFunc("/alldonated", getAllDonatedTweets)
 	router.HandleFunc("/getdonated", getDonatedTweets)
 	router.HandleFunc("/getdonors", getDonors)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", cfg.Port), router))
+
+	// create a new http server with a default timeout for incoming requests
+	timeout := 15 * time.Second
+	srv = &http.Server{
+		Addr:              fmt.Sprintf(":%v", cfg.Port),
+		Handler:           router,
+		ReadTimeout:       timeout,
+		ReadHeaderTimeout: timeout,
+		WriteTimeout:      timeout,
+		IdleTimeout:       timeout,
+	}
+
+	// start the server
+	log.Info("New server started")
+	log.Fatal(srv.ListenAndServe())
 }
 
 // goodDonation captures the body off an incoming request and sets up the struct necessary to respond to a successful

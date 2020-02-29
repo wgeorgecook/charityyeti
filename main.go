@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,11 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO: Handle currency properly on the http server and respondToDonation
-// TODO: Graceful shutdown on http server
 // TODO: Graceful panic handling
-// TODO: Queuing for tweets
-// TODO: Does this break if someone invokes on themselves?
 
 // type to hold environment variables
 type config struct {
@@ -64,6 +62,7 @@ type charityYetiAggregation struct {
 	Map []charityYetiData `bson:"map"`
 }
 
+var srv *http.Server
 var twitterClient *twitter.Client
 var stream *twitter.Stream
 var tweetQueue chan *twitter.Tweet
@@ -101,7 +100,6 @@ func init() {
 	if err := env.Parse(&cfg); err != nil {
 		log.Errorf("%+v\n", err)
 	}
-	log.Infof("Environment variables set: %+v", cfg)
 
 	// configure Mongo
 	log.Infow("Connecting to Mongo")
@@ -111,7 +109,7 @@ func init() {
 
 func main() {
 	// Configure global Twitter twitterClient
-	log.Infow("Configuring Twitter twitterClient")
+	log.Info("Configuring Twitter twitterClient")
 	config := oauth1.NewConfig(cfg.ConsumerKey, cfg.ConsumerSecret)
 	token := oauth1.NewToken(cfg.AccessToken, cfg.AccessSecret)
 	httpClient := config.Client(oauth1.NoContext, token)
@@ -136,6 +134,14 @@ func main() {
 	log.Warn(<-ch)
 
 	// Stop the stream
-	log.Warnw("Stopping stream")
+	log.Info("Stopping stream")
 	stream.Stop()
+	log.Info("Stream stopped")
+
+	// Stop the HTTP server
+	log.Info("Stopping server")
+	if err := srv.Shutdown(context.Background()); err != nil {
+		log.Errorf("could not gracefully shutdown server: %v", err)
+	}
+	log.Info("Server stopped")
 }
