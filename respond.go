@@ -11,10 +11,9 @@ import (
 	"github.com/dghubble/go-twitter/twitter"
 )
 
-// respondToInvocation receives an incoming tweet from a stream,
-// and will respond to it with a link to donate to either
-// Foundation To Decrease World Suck or directly at Parners
-// In Health
+// respondToInvocation receives an incoming tweet from a stream, and will respond to it with a link to donate via the
+// Charity Yeti website. The donation link includes an id for a Mongo document for the front end to retrieve and add
+// on the donation value after a successful donation.
 func respondToInvocation(yeti yetiInvokedData) error {
 	if yeti.honorary.ScreenName != "" {
 		dataID := primitive.NewObjectID()
@@ -54,12 +53,14 @@ func respondToInvocation(yeti yetiInvokedData) error {
 		return nil
 	}
 
+	// TODO: this only works if the invoker is **responding** to a tweet. Won't work if a user
+	// TODO: retweets with comment because there's not tweet.InResponseTo attribute
+	// TODO: I think this should be desired behavior but should seek consensus
 	return errors.New("no honorary to respond to")
 }
 
-// respondToDonation gets called after a successful donation. It parses the
-// data sent from the server to make sure that our responses get sent to the
-// original invocation tweet
+// respondToDonation gets called after a successful donation. It parses the data sent from the Charity Yeti front end
+// client to make sure that our responses get sent to the original invocation tweet
 func respondToDonation(tweet successfulDonationData) error {
 	tweetText := fmt.Sprintf("Good news, %v! %v thought your tweet was so great, they donated $%v to Partner's in Health on your behalf! See https://charityyeti.com for details.", tweet.honorary, tweet.invoker, tweet.donationValue)
 	log.Debugf(fmt.Sprintf("Tweet to send: %+v", tweetText))
@@ -90,38 +91,28 @@ func respondToDonation(tweet successfulDonationData) error {
 	return nil
 }
 
-// generateResponse parses the tweet from the demux stream, pulls out
-// the user who sent it, the ID of the originating tweet, and
-// passes it to respondToInvocation to send to Twitter
-func generateResponse(incomingTweet *twitter.Tweet) error {
+// processInvocation parses an incoming tweet from the tweetQueue, pulls out the user who sent it, the ID of the
+// originating tweet, and passes it to respondToInvocation to send to Twitter
+func processInvocation() {
 
-	honorary := getInReplyToTwitterUser(incomingTweet.InReplyToScreenName)
+	// loop forever to listen for incoming tweets
+	for {
+		// when a tweet gets received from the queue, start processing
+		incomingTweet := <-tweetQueue
 
-	yeti := yetiInvokedData{
-		invoker:         incomingTweet.User,
-		honorary:        honorary,
-		invokerTweetID:  incomingTweet.ID,
-		originalTweetID: incomingTweet.InReplyToStatusID,
+		honorary := getInReplyToTwitterUser(incomingTweet.InReplyToScreenName)
+
+		yeti := yetiInvokedData{
+			invoker:         incomingTweet.User,
+			honorary:        honorary,
+			invokerTweetID:  incomingTweet.ID,
+			originalTweetID: incomingTweet.InReplyToStatusID,
+		}
+
+		err := respondToInvocation(yeti)
+		if err != nil {
+			log.Error(err)
+		}
 	}
 
-	err := respondToInvocation(yeti)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// getInReplyToTwitterUser takes the screen name of a Twitter user (IE - the honorary on an invoked tweet) and returns
-// the full Twitter user details for that user
-func getInReplyToTwitterUser(sn string) *twitter.User {
-	user, _, err := twitterClient.Users.Show(&twitter.UserShowParams{
-		ScreenName: sn,
-	})
-
-	if err != nil {
-		log.Error("cannot get honorary user details: %v", err)
-	}
-
-	return user
 }
