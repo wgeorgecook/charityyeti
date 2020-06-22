@@ -54,7 +54,7 @@ type charityYetiData struct {
 	InvokerTweetID  int64        `json:"invokerTweetID" bson:"invokerTweetID"`
 	Invoker         twitter.User `json:"invoker" bson:"invoker"`
 	Honorary        twitter.User `json:"honorary" bson:"honorary"`
-	DonationValue   int          `json:"donationValue" bson:"donationValue"`
+	DonationValue   float32      `json:"donationValue" bson:"donationValue"`
 }
 
 // aggregated Mongo data
