@@ -42,7 +42,7 @@ type yetiInvokedData struct {
 type successfulDonationData struct {
 	invoker         string
 	honorary        string
-	donationValue   int
+	donationValue   float32
 	invokerTweetID  int64
 	originalTweetID int64
 }
