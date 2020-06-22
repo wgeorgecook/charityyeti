@@ -54,14 +54,14 @@ func respondToInvocation(yeti yetiInvokedData) error {
 	}
 
 	/* TODO:
-		Right now, Charity Yeti only works if the invoker is **responding** to a tweet. We can't properly handle a case
-		where a user retweets with comment because there's not a tweet.InResponseTo attribute. Having this in response
-		to attribute is the only mechanism we presently have to detect and track *who* the invoker wants to credit their
-		donation for. There may be other attributes (I haven't looked into what data we can get from a retweeted tweet,
-		but it is probably similar), but we should decide if we want to interact with both replies and retweeted tweets.
+	Right now, Charity Yeti only works if the invoker is **responding** to a tweet. We can't properly handle a case
+	where a user retweets with comment because there's not a tweet.InResponseTo attribute. Having this in response
+	to attribute is the only mechanism we presently have to detect and track *who* the invoker wants to credit their
+	donation for. There may be other attributes (I haven't looked into what data we can get from a retweeted tweet,
+	but it is probably similar), but we should decide if we want to interact with both replies and retweeted tweets.
 
-		See issue #4 for discussion.
-	 */
+	See issue #4 for discussion.
+	*/
 	return errors.New("no honorary to respond to")
 }
 
