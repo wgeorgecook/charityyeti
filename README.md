@@ -10,6 +10,10 @@ Read about the Green family connection to Partner's In Health on the [Partner's 
 
 Allows Twitter users to raise money for Partner's in Health. If you see a tweet so good you want to donate to Partner's In Health on behalf of that tweeter, respond to the tweet and [@CharityYeti](https://twitter.com/charityyeti). We'll send you a link to donate to Partner's in Health and will tweet back letting the original tweeter that you appreciated their tweet to support maternal health in Sierra Leon! [This tweet by Hank](https://twitter.com/hankgreen/status/1186824079120011264) is the basis of this project. An image of the tweet is saved here as `goal.jpeg`.
 
+## Deployment
+
+I built Charity Yeti on [Docker](https://www.docker.com) using [docker-compose](https://docs.docker.com/compose/). You can spin up a backend by cloning the repo and issuing `docker-compose up charityyeti` from the same directory as the `Dockerfile` (the repo root). This exposes the port set as your environment variable `PORT`. See the dependecies section below for setting environment variables for local development easily.
+
 ## Code of Conduct
 
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v1.4%20adopted-ff69b4.svg)](code-of-conduct.md)
