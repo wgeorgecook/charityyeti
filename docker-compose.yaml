@@ -1,10 +1,25 @@
 version: '3'
 services:
-    charityyeti:
+    backend:
         build:
             context: .
-            dockerfile: Dockerfile
-        image: williamcook/charityyeti
-        env_file: .env
-        ports:
-            - "8080:8080"
+            dockerfile: Dockerfile.backend
+        image: williamcook/charityyeti-backend
+        env_file: 
+            - .env
+        environment:
+            - CONSUMER_KEY=${CONSUMER_KEY}
+            - CONSUMER_SECRET=${CONSUMER_SECRET}
+            - ACCESS_TOKEN=${ACCESS_TOKEN}
+            - ACCESS_SECRET=${ACCESS_SECRET}
+            - MONGO_URI=${MONGO_URI}
+            - DATABASE=${DATABASE}
+            - COLLECTION=${COLLECTION}
+            - PORT=${PORT}
+    frontend:
+        build:
+            context: .
+            dockerfile: Dockerfile.frontend
+        image: williamcook/charityyeti-frontend
+        ports: 
+            - "80:80"
