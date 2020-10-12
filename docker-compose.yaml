@@ -4,7 +4,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.backend
-        image: williamcook/charityyeti-backend
+        image: williamcook/charityyeti-backend:${TAG_VERSION}
         env_file: 
             - .env
         environment:
@@ -16,10 +16,12 @@ services:
             - DATABASE=${DATABASE}
             - COLLECTION=${COLLECTION}
             - PORT=${PORT}
+        ports:
+            - "8080:8080"
     frontend:
         build:
             context: .
             dockerfile: Dockerfile.frontend
-        image: williamcook/charityyeti-frontend
+        image: williamcook/charityyeti-frontend:${TAG_VERSION}
         ports: 
             - "80:80"
