@@ -4,7 +4,7 @@ body{
 	border: 0;
 	font: 18px/24px 'Roboto', sans-serif;
 	color: #6400b2;
-	background: linear-gradient(90deg, #ffffff 0%, #ffffff 850px, #b98af5 110%);
+	/* background: linear-gradient(90deg, #ffffff 0%, #ffffff 850px, #b98af5 110%); */
 }
 body.loading{
 	overflow: hidden;
@@ -45,17 +45,16 @@ header{
 }
 .mother{
 	padding: 0.5em;
-}
-.desktop{
-	width: 100%;
-	background: linear-gradient(180deg, #aaa4ff 0%, #b98af5 260px, #ffffff 260px, #ffffff 100%);
-}
-.mobile{
 	width: 100%;
 	max-width: 480px;
 	margin: 0 auto;
 	background-color: #FFFFFF;
 }
+.desktop{
+	width: 100%;
+	/* background: linear-gradient(180deg, #aaa4ff 0%, #b98af5 260px, #ffffff 260px, #ffffff 100%); */
+}
+
 section.tweet{
 	display: block;
 	max-width: 600px;
@@ -192,6 +191,11 @@ input[type=checkbox]{
 	min-width: 300px;
 	margin: 0 auto;
 }
+
+footer {
+	margin-top: 1.5em;
+}
+
 .footer-toe{
 	height: 55px;
 	width: 50%;
@@ -199,7 +203,7 @@ input[type=checkbox]{
 	min-width: 120px;
 	margin: 0 auto;
 	border-radius: 60px 60px 0 0;
-	background: #aaa4ff url('../imgs/footer_heart.png') no-repeat 50% 12px;
+	background: #aaa4ff url('./img/footer_heart.png') no-repeat 50% 12px;
 }
 .footer-heel{
 	background-color: #aaa4ff;
