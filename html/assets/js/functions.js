@@ -3,6 +3,7 @@ var doPaymentFail;
 var preflight;
 var donationAmt;
 var deviceData;
+var doClose;
 
 jQuery(function ($){
 	$(document).ready(function(){
@@ -10,10 +11,10 @@ jQuery(function ($){
 		$(".nojs").hide();
 		
 		preflight = function(){
-			console.log('doing the preflight check');
 			$(".blackout").show();
+			$(".blackout-text").removeClass('success');
+			$(".blackout-text").addClass('fail');
 			donationAmt = document.forms[0].amount.value
-			//var method = $(this).attr('rel-type');
 			if(donationAmt == 0){
 				var re = /[-+]?\d*\.?\d+([eE][-+]?\d+)?/gm
 				donationAmt = (document.forms[0].amnt.value).match(re)
@@ -29,7 +30,6 @@ jQuery(function ($){
 		}
 		
 		doPaymentSuccess = function(nonce){
-			console.log('doing the success stuff');
 			$.ajax({
 				url: "/donate/success/",
 				method: 'POST',
@@ -39,6 +39,8 @@ jQuery(function ($){
 					device: deviceData
 				},
 				success: function(data){
+					$(".blackout-text").removeClass('fail');
+					$(".blackout-text").addClass('success');
 					writeMsg("$" + donationAmt + " was donated successfully.");
 				},
 				error: function(xhr){
@@ -48,19 +50,26 @@ jQuery(function ($){
 		}
 		
 		doPaymentFail = function(err){
-			writeMsg('payment failure');
-			console.log(err);
+			writeMsg('Unable to make payment. Please ensure all payment information has been entered correctly.');
 		}
 		
 		var writeMsg = function(x){
-			$(".blackout-text").html(x);
+			$(".blackout-text").html('<div>' + x + '</div><button id="close-btn" onclick="doClose()">CLOSE</button>');
 			$(".blackout-text").css('opacity', '1');
 		}
 		
 		$(".blackout").click(function(){
-			$(".blackout-text").html('');
-			$(".blackout-text").css('opacity', '0.01');
-			$(this).hide();
+			doClose();
 		});
+		
+		doClose = function(){
+			if($(".blackout-text").hasClass("success")){
+				window.location.href = '/';
+			} else {
+				$(".blackout-text").html('');
+				$(".blackout-text").css('opacity', '0.01');
+				$(".blackout").hide();
+			}
+		}
 	});
 });
