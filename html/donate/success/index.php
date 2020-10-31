@@ -1,24 +1,15 @@
 <?php
 session_start();
-require_once $_SERVER['DOCUMENT_ROOT'] . '/braintree/lib/autoload.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/settings.php';
 
-$result = $gateway->transaction()->sale([
-	'amount' => '25.00',
-	'paymentMethodNonce' => 'tokencc_bc_d8zjt3_vstd5q_n8s2gc_5473d5_xp2',
-	'deviceData' => {
-		"correlation_id": "fee775907bba559715289b8992fecf47"
-	},
-	'options' => [
-		'submitForSettlement' => true
-	]
-]);
+if('sandbox' == BRAINTREE_ENV){
+	ini_set('display_errors', 1);
+	ini_set('display_startup_errors', 1);
+	error_reporting(E_ALL);
+}
 
-print("<pre>");
-print_r($result);
-print("</pre>");
+require_once $_SERVER['DOCUMENT_ROOT'] . '/braintree/lib/Braintree.php';
 
-//let's send back an error message with these potential points of failure...
-/*
 if($_SERVER['REQUEST_METHOD'] != 'POST'){
 	http_response_code(403);
 	print('Request method was not POST.');
@@ -49,38 +40,50 @@ $nonce = $_POST['nonce'];
 $device = $_POST['device'];
 $amt = $_POST['amt'];
 
-$result = $gateway->transaction()->sale([
+$gateway = new Braintree\Gateway([
+	'environment' => BRAINTREE_ENV,
+	'merchantId' => BRAINTREE_MID,
+	'publicKey' => BRAINTREE_PUB,
+	'privateKey' => BRAINTREE_PVT
+]);
+$transaction = $gateway->transaction();
+
+$params = [
 	'amount' => $amt,
 	'paymentMethodNonce' => $nonce,
 	'deviceData' => $device,
 	'options' => [
 		'submitForSettlement' => true
 	]
-]);
+];
+
+$result = $transaction->sale($params);
 
 if ($result->success) {
 	$post = new stdClass();
 	$post->_id = $id;
 	$post->donationValue = (int) $amt;
 	$postval = json_encode($post);
-	//$ch = curl_init();
-	//curl_setopt($ch, CURLOPT_URL, "https://charityyeti.herokuapp.com/update");
-	//curl_setopt($ch, CURLOPT_POSTFIELDS, $postval);
-	//curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-	//curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
-	//	'Content-Type: application/json',                                                                                
-	//	'Content-Length: ' . strlen($postval))                                                                       
-	//);
-	//$output = curl_exec($ch);
-	//curl_close($ch);
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, DB_BASE . "/update");
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $postval);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
+		'Content-Type: application/json',                                                                                
+		'Content-Length: ' . strlen($postval))                                                                       
+	);
+	$output = curl_exec($ch);
+	curl_close($ch);
 
-	//$_SESSION['donationkey'] = '';
-
-	//is there something specific we want to send back here to be included on the success page?
-	print_r($postval);
+	if('production' == BRAINTREE_ENV){
+		$_SESSION['donationkey'] = '';
+		//jrp: is there something specific we want to send back here to be included on the success page?
+	} else {
+		print_r($postval);
+	}
 } else {
 	http_response_code(403);
-	print('There was no amount specified.');
+	print('There was a transaction error.');
 	exit;
 }
 
