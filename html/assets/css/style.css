@@ -180,17 +180,28 @@ input[type=checkbox]{
 	top: 0; bottom: 0; left: 0; right: 0;
 	background-color: rgba(0,0,0,0.8);
 	display: none;
+	background-image: url('../imgs/loading.gif');
+	background-size: 150px 150px;
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
 }
 .blackout-text{
-	background-color: #FFF;
 	position: relative;
 	top: 40px;
-	padding: 1em;
 	opacity: 0.01;
 	transition: opacity 2s;
-	width: 25%;
-	min-width: 300px;
+	width: 350px;
+	padding: 340px 1em 1em;
 	margin: 0 auto;
+	background-size: cover;
+	border-radius: 30px;
+	text-align: center;
+}
+.blackout-text.fail{
+	background-image: url('../imgs/error_seal.png');
+}
+.blackout-text.success{
+	background-image: url('../imgs/success_seal.png');
 }
 .footer-toe{
 	height: 55px;
@@ -216,7 +227,8 @@ footer a{
 p.center{
 	text-align: center;
 }
-#credit-card-btn{
+#credit-card-btn,
+#close-btn{
 	background-color: #6400b2;
 	color: #ffe566;
 	cursor: pointer;
