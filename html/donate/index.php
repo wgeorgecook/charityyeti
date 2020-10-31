@@ -11,7 +11,7 @@ if('sandbox' == BRAINTREE_ENV){
 $idmsg = '';
 $canDonate = false;
 $uri = explode('/',$_SERVER['REQUEST_URI']);
-if(count($uri > 2) && !empty($uri[2])){
+if((count($uri) > 2) && !empty($uri[2])){
 	$id = $uri[2];
 	if(!ctype_xdigit($id)){
 		$idmsg = "The incoming ID is not formatted correctly";
