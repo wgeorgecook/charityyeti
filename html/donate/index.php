@@ -1,5 +1,13 @@
 <?php
 session_start();
+require_once $_SERVER['DOCUMENT_ROOT'] . '/settings.php';
+
+if('sandbox' == BRAINTREE_ENV){
+	ini_set('display_errors', 1);
+	ini_set('display_startup_errors', 1);
+	error_reporting(E_ALL);
+}
+
 $idmsg = '';
 $canDonate = false;
 $uri = explode('/',$_SERVER['REQUEST_URI']);
@@ -9,7 +17,7 @@ if(count($uri > 2) && !empty($uri[2])){
 		$idmsg = "The incoming ID is not formatted correctly";
 	} else {
 		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, "https://charityyeti.herokuapp.com/get?id=$id");
+		curl_setopt($ch, CURLOPT_URL, DB_BASE . "/get?id=$id");
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 		$output = json_decode(curl_exec($ch));
 		curl_close($ch);
@@ -18,25 +26,31 @@ if(count($uri > 2) && !empty($uri[2])){
 		} else {
 			if($output->donationValue){
 				$idmsg = "This ID has already been donated towards.";
-				//remove below once I've figured out how to add new entries
-				$_SESSION['donationkey'] = $id;
-				$canDonate = true; 
+				if('sandbox' == BRAINTREE_ENV){
+					$_SESSION['donationkey'] = $id;
+					$canDonate = true; 
+				}
 			} else {
 				$canDonate = true;
 				$_SESSION['donationkey'] = $id;
-				$idmsg = "You are donating for ID# $id";
 			}
 		}
 	}
 } else {
-	$idmsg = "No ID supplied";
+	if('sandbox' == BRAINTREE_ENV){
+		$id = '5e330cf31398d78ea074d32c';
+		$_SESSION['donationkey'] = $id;
+		$canDonate = true;
+	} else {
+		$idmsg = "There was no ID supplied.";
+	}
 }
 ?>
 
 <?php if(!$canDonate): ?>
 
 <?php
-//not sure exactly what we want to do if someone is here in error
+//jrp: not sure exactly what we want to do if someone is here in error
 http_response_code(403);
 ?>
 <!DOCTYPE html>
@@ -55,7 +69,6 @@ Please note, JavaScript is required to process a donation. Please enable JavaScr
 </div>
 
 <div class="js">
-<?php //print($idmsg) ?>
 
 	<form action="/" id="payment-form" method="post">
 		<div><h3>Donation Info</h3>
@@ -72,14 +85,7 @@ Please note, JavaScript is required to process a donation. Please enable JavaScr
 		</div>
 		
 		<div>
-		<!--
-		<h2>Method</h2>
-		<button type="button" id="paypal-btn" class="doPayment" rel-type="paypal">PayPal</button><br/>
-		<button type="button" id="venmo-btn" class="doPayment" rel-type="venmo">Venmo</button><br/>
-		<button type="button" id="google-pay-btn" class="doPayment" rel-type="google">Google Pay</button><br/>
-		<button type="button" id="apple-pay-btn" class="doPayment" rel-type="apple">Apply Pay</button><br/>
-		<button type="button" id="samsung-pay" class="doPayment" rel-type="samsung">Samsung Pay</button><br/>
-		-->
+
 		<h3>Credit Card</h3>
 		
 		<label for="card-number">Card Number</label>
@@ -91,13 +97,7 @@ Please note, JavaScript is required to process a donation. Please enable JavaScr
 		<label for="expiration-date">Expiration (MM / YY)</label>
 		<div id="expiration-date" class="hosted-field"></div>
 		
-		<!-- do we even need these?
-		<label for="card-name">Name as it Appears on Card</label>
-		<div id="card-name"><input id="card-name" type="text" /></div>
-		
-		<label for="card-zip">Billing ZIP Code</label>
-		<div id="card-zip"><input id="card-zip" type="text" /></div>
-		-->
+		<?php //jrp: do we need to collect zip code or name on card? ?>
 
 		<button type="submit" id="credit-card-btn" class="doPayment" rel-type="credit" disabled="disabled">DONATE</button>
 		</div>
@@ -113,7 +113,7 @@ Please note, JavaScript is required to process a donation. Please enable JavaScr
       var submit = document.querySelector('#credit-card-btn');
 
       braintree.client.create({
-        authorization: 'sandbox_ykcw354q_wmv3nh8skrjwtqr5'
+        authorization: '<?php print(BRAINTREE_ATH) ?>'
       }, function (clientErr, clientInstance) {
         if (clientErr) {
           console.error(clientErr);
@@ -178,14 +178,12 @@ Please note, JavaScript is required to process a donation. Please enable JavaScr
 			if(preflight()){
 				hostedFieldsInstance.tokenize(function (tokenizeErr, payload) {
 				  if (tokenizeErr) {
-					  console.log('epic fail');
 					doPaymentFail(tokenizeErr);
 					return;
 				  }
 
 				  // If this was a real integration, this is where you would
 				  // send the nonce to your server.
-				  console.log('epic win');
 				  doPaymentSuccess(payload.nonce);
 				});	
 			}
