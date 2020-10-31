@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 // startServer spins up an http listener for this service on the
@@ -20,6 +21,7 @@ func startServer() {
 	router.HandleFunc("/get/donated/all", getAllDonatedTweets)
 	router.HandleFunc("/get/donated", getDonatedTweets)
 	router.HandleFunc("/get/donors", getDonors)
+	router.HandleFunc("/braintree/nonce", receiveNonce)
 
 	// create a new http server with a default timeout for incoming requests
 	timeout := 15 * time.Second
