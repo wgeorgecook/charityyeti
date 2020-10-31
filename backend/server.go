@@ -15,7 +15,7 @@ import (
 func startServer() {
 	// define the new router, define paths, and handlers on the router
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/donate", goodDonation)
+	router.HandleFunc("/donate/success", goodDonation)
 	router.HandleFunc("/update", updateRecord)
 	router.HandleFunc("/get", getRecord)
 	router.HandleFunc("/get/donated/all", getAllDonatedTweets)

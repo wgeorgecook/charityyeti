@@ -8,11 +8,11 @@ Read about the Green family connection to Partner's In Health on the [Partner's 
 
 ## This Bot
 
-Allows Twitter users to raise money for Partner's in Health. If you see a tweet so good you want to donate to Partner's In Health on behalf of that tweeter, respond to the tweet and [@CharityYeti](https://twitter.com/charityyeti). We'll send you a link to donate to Partner's in Health and will tweet back letting the original tweeter that you appreciated their tweet to support maternal health in Sierra Leon! [This tweet by Hank](https://twitter.com/hankgreen/status/1186824079120011264) is the basis of this project. An image of the tweet is saved here as `goal.jpeg`.
+Allows Twitter users to raise money for Partner's in Health. If you see a tweet so good you want to donate to Partner's In Health on behalf of that tweeter, respond to the tweet and [@CharityYeti](https://twitter.com/charityyeti). We'll send you a link to donate to Partner's in Health and will tweet back letting the original tweeter that you appreciated their tweet to support maternal health in Sierra Leon! [This tweet by Hank](https://twitter.com/hankgreen/status/1186824079120011264) is the basis of this project.
 
 ## Deployment
 
-I built Charity Yeti on [Docker](https://www.docker.com) using [docker-compose](https://docs.docker.com/compose/). You can spin up a backend by cloning the repo and issuing `docker-compose up charityyeti` from the same directory as the `Dockerfile` (the repo root). This exposes the port set as your environment variable `PORT`. See the dependecies section below for setting environment variables for local development easily.
+I built Charity Yeti on [Docker](https://www.docker.com) using [docker-compose](https://docs.docker.com/compose/). To build, issue `docker-compose build ${serviceName}`, where `${serviceName}` is either `frontend`, `backend`, or both. You can spin up a backend by cloning the repo and issuing `docker-compose up backend` from the same directory as the `Dockerfile.backend` (the repo root). This exposes the port set as your environment variable `PORT`. See the dependecies section below for setting environment variables for local development easily. The frontend can also be started using `docker-compose up frontend` from repo root where the `Dockerfile.frontend` lives. 
 
 ## Code of Conduct
 
@@ -21,7 +21,15 @@ I built Charity Yeti on [Docker](https://www.docker.com) using [docker-compose](
 This project is by Nerdfighters, for Partners In Health. We would love open collaboration and accept contributions. We also expect that you not forget to be awesome, and adhere by the [Contributer Covenant](https://www.contributor-covenant.org). See `code-of-conduct.md` for full details.
 
 ## Contributing
-This is an early stage project. To contribute, please open an issue so we can discuss. Once we address the issue at hand, fork the repo and make the necessary changes or updates, then create a pull request into this repo.
+This is an early stage project. To contribute, please open an issue so we can discuss. Once we address the issue at hand, fork the repo and make the necessary changes or updates, then create a pull request into this repo. `architecture.md` contains a [Mermaid diagram](https://github.com/mermaid-js/mermaid) of the architecture Charity Yeti uses. If you make a change to the way Charity Yeti behaves, please also update the Mermaid sequence diagram.
 
 ## Dependencies
-I started building this with [GoDotEnv](https://github.com/joho/godotenv) and [env](https://github.com/caarlos0/env) to manage environment variables. I'm also using [Go-Twitter](https://github.com/dghubble/go-twitter#authentication) to do Twitter interactions.
+ - [GoDotEnv](https://github.com/joho/godotenv) and [env](https://github.com/caarlos0/env) to manage environment variables. 
+ - [Go-Twitter](https://github.com/dghubble/go-twitter#authentication) to do Twitter interactions.
+ - [Gorilla/Mux](https://github.com/gorilla/mux) for backend HTTP server and routing.
+ - [MongoDB Go Driver](https://github.com/mongodb/mongo-go-driver) for interactions with the [MongoDB](https://www.mongodb.com) database.
+ - [Zap Suggared Logging](https://github.com/uber-go/zap) for backend logging.
+ - [PHP](https://www.php.net) powers the front end.
+ - [Apache](https://httpd.apache.org) is the web server running the front end.
+ - [Docker](https://docker.io) and [Docker Compose](https://docs.docker.com/compose/) for deployment and local development.
+ - [Mermaid](https://github.com/mermaid-js/mermaid) for the sequence diagram.
