@@ -1,3 +1,5 @@
+appsettings.*
+.vs
 .env
 .DS_STORE
 charityyeti
