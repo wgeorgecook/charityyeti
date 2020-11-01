@@ -2,3 +2,5 @@
 .DS_STORE
 charityyeti
 .idea
+appsettings*json
+bin
