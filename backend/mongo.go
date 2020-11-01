@@ -3,15 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"time"
 )
 
 func initMongo(connectionURI string) *mongo.Client {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionURI))
 
 	if err != nil {
@@ -69,8 +71,42 @@ func updateDocument(u charityYetiData) (*charityYetiData, error) {
 // TODO: pagination
 func aggregateDonatedTweets() ([]bson.M, error) {
 	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
-	match := bson.D{{"$match", bson.D{{"donationValue", bson.D{{"$gt", 0}}}}}}
-	group := bson.D{{"$group", bson.D{{"_id", "$originalTweetID"}, {"total", bson.D{{"$sum", "$donationValue"}}}}}}
+	match := bson.D{
+		primitive.E{
+			Key: "$match",
+			Value: bson.D{
+				primitive.E{
+					Key: "donationValue",
+					Value: bson.D{
+						primitive.E{
+							Key:   "$gt",
+							Value: 0,
+						},
+					},
+				},
+			},
+		},
+	}
+	group := bson.D{
+		primitive.E{
+			Key: "$group",
+			Value: bson.D{
+				primitive.E{
+					Key:   "_id",
+					Value: "$originalTweetID",
+				},
+				primitive.E{
+					Key: "total",
+					Value: bson.D{
+						primitive.E{
+							Key:   "$sum",
+							Value: "$donationValue",
+						},
+					},
+				},
+			},
+		},
+	}
 
 	resultCursor, err := collection.Aggregate(context.Background(), mongo.Pipeline{match, group})
 	if err != nil {
@@ -92,8 +128,42 @@ func aggregateDonatedTweets() ([]bson.M, error) {
 // TODO: pagination
 func aggregateDonors() ([]bson.M, error) {
 	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
-	match := bson.D{{"$match", bson.D{{"donationValue", bson.D{{"$gt", 0}}}}}}
-	group := bson.D{{"$group", bson.D{{"_id", "$invoker.screenname"}, {"total", bson.D{{"$sum", "$donationValue"}}}}}}
+	match := bson.D{
+		primitive.E{
+			Key: "$match",
+			Value: bson.D{
+				primitive.E{
+					Key: "donationValue",
+					Value: bson.D{
+						primitive.E{
+							Key:   "$gt",
+							Value: 0,
+						},
+					},
+				},
+			},
+		},
+	}
+	group := bson.D{
+		primitive.E{
+			Key: "$group",
+			Value: bson.D{
+				primitive.E{
+					Key:   "_id",
+					Value: "$invoker.screenname",
+				},
+				primitive.E{
+					Key: "total",
+					Value: bson.D{
+						primitive.E{
+							Key:   "$sum",
+							Value: "$donationValue",
+						},
+					},
+				},
+			},
+		},
+	}
 
 	resultCursor, err := collection.Aggregate(context.Background(), mongo.Pipeline{match, group})
 	if err != nil {
@@ -112,7 +182,17 @@ func aggregateDonors() ([]bson.M, error) {
 
 // returns all data on tweets that have a successful donationValue logged to their document in Mongo
 func aggregateAllDonatedTweets() (*[]charityYetiData, error) {
-	filter := bson.D{{"donationValue", bson.D{{"$gt", 0}}}}
+	filter := bson.D{
+		primitive.E{
+			Key: "donationValue",
+			Value: bson.D{
+				primitive.E{
+					Key:   "$gt",
+					Value: 0,
+				},
+			},
+		},
+	}
 	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
 	resultCursor, err := collection.Find(context.Background(), filter)
 	if err != nil {

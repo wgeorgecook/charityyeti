@@ -15,13 +15,13 @@ import (
 func startServer() {
 	// define the new router, define paths, and handlers on the router
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/donate/success", goodDonation)
+	router.HandleFunc("/donate", goodDonation)
 	router.HandleFunc("/update", updateRecord)
 	router.HandleFunc("/get", getRecord)
 	router.HandleFunc("/get/donated/all", getAllDonatedTweets)
 	router.HandleFunc("/get/donated", getDonatedTweets)
 	router.HandleFunc("/get/donors", getDonors)
-	router.HandleFunc("/braintree/nonce", receiveNonce)
+	router.HandleFunc("/braintree/payment", receiveBtRequest)
 
 	// create a new http server with a default timeout for incoming requests
 	timeout := 15 * time.Second

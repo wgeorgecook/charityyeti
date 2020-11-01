@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
 )
@@ -24,7 +25,8 @@ func respondToInvocation(yeti yetiInvokedData) error {
 
 		if sendResponses {
 			// create the record in Mongo
-			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
 			data := bson.M{
 				"_id":             dataID,
 				"invoker":         yeti.invoker,

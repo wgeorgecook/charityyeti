@@ -5,73 +5,61 @@ import (
 	"net/http"
 )
 
-type nonceError struct {
-	Error   bool   `json:"error"`
-	Message string `json:"message"`
+// brainTreeData is information we receive from the front end after a transaction
+// gets started, plus the options array we add on. We pass this data back to
+// Brain Tree opaquely.
+type brainTreeData struct {
+	Nonce      string            `json:"paymentMethodNonce"`
+	Amount     string            `json:"amount"`
+	DeviceData string            `json:"deviceData"`
+	Options    []map[string]bool `json:"options"`
 }
 
-// receiveNonce looks for a query param called Nonce, which the client already sent to BrainTree
-// prior to sending to the server. The server relays this to BrainTree to verify that a transaction
-// is acceptable and BrainTree will process this.
-func receiveNonce(w http.ResponseWriter, r *http.Request) {
+// receiveBtRequest receives a brainTreeData struct as an POST body,
+// and then relays that request to the middleware that forwards directly
+// to Brain Tree. We then send the middleware's response back on the request.
+func receiveBtRequest(w http.ResponseWriter, r *http.Request) {
 	log.Info("Received request for BrainTree token")
 
-	// response object
-	var response nonceError
+	// unmarshal the request body
+	var btData brainTreeData
+	if err := json.NewDecoder(r.Body).Decode(&btData); err != nil {
+		// if we
+		log.Errorf("could not decode incoming request: %v", err)
+		http.Error(w, "bad request", 400)
+		return
+	}
 
 	log.Info("checking for nonce...")
-	// make sure the client sent a nonce as a get param
-	var nonce string
-	if nonceCheck, ok := r.URL.Query()["nonce"]; ok {
-		// there's a nonce on the request, hurray!
-		// r.url.query returns an array so take the first element
-		nonce = nonceCheck[0]
-	} else {
-		// no nonce on the request, so we have a problem here
-		response.Error = true
-		response.Message = "No nonce on request"
-		respBytes, err := json.Marshal(response)
-		if err != nil {
-			// this really shouldn't ever happen but it's good to catch it anyway
-			log.Errorf("could not marshal response: %v", err)
-			http.Error(w, "bad request", 400)
-			return
-		}
-		w.WriteHeader(400)
-
-		// technically also returns an error but ehhhh
-		_, _ = w.Write(respBytes)
-
-		// we're done here
+	if btData.Nonce == "" {
+		http.Error(w, "bad request", 400)
 		return
 	}
 
 	// oh good, things are kosher, at least so far
-	log.Debugf("Nonce found: %v", nonce)
+	log.Debugf("Nonce found: %v", btData.Nonce)
 
 	// we need to send this nonce to BrainTree so they can process this transaction
 	// TODO: we need to actually do the needful, kindly
-
-	// the front end derives state from our response, so we marshal
-	// a response and send a null error
-	response.Error = false
-	response.Message = "successful post to BrainTree"
-
-	// marshal our response for the front end
-	respBytes, err := json.Marshal(response)
+	statusCode, err := doBrainTreeRequest(btData)
 	if err != nil {
-		// this really shouldn't ever happen but it's good to catch it anyway
-		log.Errorf("could not marshal response: %v", err)
-		http.Error(w, "internal server error", 500)
+		// uh oh
+		log.Errorf("Brain Tree request failed: %v", err)
+		http.Error(w, err.Error(), statusCode)
 		return
 	}
 
-	// and return the response to the requestor
+	// if everything is cool then we done
 	w.WriteHeader(200)
-
-	// technically also returns an error but ehhhh
-	_, _ = w.Write(respBytes)
 
 	// not really necessary but I like closure
 	return
+}
+
+// doBrainTreeRequest sends the request to the Brain Tree middleware
+func doBrainTreeRequest(data brainTreeData) (int, error) {
+	log.Info("Building request to send Nonce to BrainTree")
+
+	// everything is great!
+	return 200, nil
 }
