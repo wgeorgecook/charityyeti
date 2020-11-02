@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/joho/godotenv"
-	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/dghubble/go-twitter/twitter"
@@ -20,14 +21,16 @@ import (
 
 // type to hold environment variables
 type config struct {
-	ConsumerKey    string `env:"CONSUMER_KEY"`
-	ConsumerSecret string `env:"CONSUMER_SECRET"`
-	AccessToken    string `env:"ACCESS_TOKEN"`
-	AccessSecret   string `env:"ACCESS_SECRET"`
-	Port           string `env:"PORT" envDefault:":8080"`
-	ConnectionURI  string `env:"MONGO_URI"`
-	Database       string `env:"DATABASE"`
-	Collection     string `env:"COLLECTION"`
+	ConsumerKey        string `env:"CONSUMER_KEY"`
+	ConsumerSecret     string `env:"CONSUMER_SECRET"`
+	AccessToken        string `env:"ACCESS_TOKEN"`
+	AccessSecret       string `env:"ACCESS_SECRET"`
+	Port               string `env:"PORT" envDefault:":8080"`
+	ConnectionURI      string `env:"MONGO_URI"`
+	Database           string `env:"DATABASE"`
+	Collection         string `env:"COLLECTION"`
+	MiddlewareEndpoint string `env:"MIDDLEWARE_ENDPOINT"`
+	MiddlewareHealth   string `env:"MIDDLEWARE_HEALTH"`
 }
 
 // type to gather tweet data from an invocation of @CharityYeti

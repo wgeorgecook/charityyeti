@@ -32,5 +32,3 @@ services:
         image: williamcook/charityyeti-middleware:${TAG_VERSION}
         env_file: 
             - .env
-        ports:
-            - "8181:80"

@@ -22,6 +22,7 @@ func startServer() {
 	router.HandleFunc("/get/donated", getDonatedTweets)
 	router.HandleFunc("/get/donors", getDonors)
 	router.HandleFunc("/braintree/payment", receiveBtRequest)
+	router.HandleFunc("/braintree/health", checkMiddlewareHealth)
 
 	// create a new http server with a default timeout for incoming requests
 	timeout := 15 * time.Second

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -13,6 +15,11 @@ type brainTreeData struct {
 	Amount     string            `json:"amount"`
 	DeviceData string            `json:"deviceData"`
 	Options    []map[string]bool `json:"options"`
+}
+
+// brainTreeTransaction is the return data the middleware sends us after a
+// successful transaction
+type brainTreeTransaction struct {
 }
 
 // receiveBtRequest receives a brainTreeData struct as an POST body,
@@ -60,6 +67,61 @@ func receiveBtRequest(w http.ResponseWriter, r *http.Request) {
 func doBrainTreeRequest(data brainTreeData) (int, error) {
 	log.Info("Building request to send Nonce to BrainTree")
 
+	// marshal the incoming data to send on the wire
+	btBytes, err := json.Marshal(data)
+	if err != nil {
+		// not sure how this can even happen
+		log.Errorf("Could not marshal incoming brain tree struct: %v", err)
+		return 500, err
+	}
+
+	// setup the request
+	req, err := http.NewRequest(http.MethodGet, cfg.MiddlewareEndpoint, bytes.NewReader(btBytes))
+	if err != nil {
+		log.Errorf("Could not create request to middleware: %v", err)
+		return 500, err
+	}
+
+	// set the headers
+	req.Header.Set("Content-Type", "application/json")
+
+	// make the request
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Errorf("Could not make the request to the middleware: %v", err)
+		return 500, err
+	}
+	defer resp.Body.Close()
+
+	// read the response back
+	respBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Could not read response: %v", err)
+		return 500, err
+	}
+
+	log.Infof("Response: %v", string(respBytes))
+
 	// everything is great!
 	return 200, nil
+}
+
+// checkMiddlewareHealth hits the health endpoint in the middleware
+// and returns the status code
+func checkMiddlewareHealth(w http.ResponseWriter, r *http.Request) {
+	log.Info("Checking middleware health")
+	resp, err := http.Get(cfg.MiddlewareHealth)
+	if err != nil {
+		log.Errorf("Could not make request to middleware health: %v", err)
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer resp.Body.Close()
+
+	respBytes, _ := ioutil.ReadAll(resp.Body)
+
+	log.Infof("Response from middleware: %v", string(respBytes))
+	w.WriteHeader(resp.StatusCode)
+	w.Write(respBytes)
+	return
 }
