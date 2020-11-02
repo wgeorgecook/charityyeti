@@ -37,6 +37,12 @@ namespace CharityYetiServices.Controllers
             };
         }
 
+        [HttpGet("healthcheck")]
+        public ActionResult HealthCheck()
+        {
+            return Ok("Healthy AF");
+        }
+
         // GET api/<PaymentController>/GetClientToken
         [HttpGet]
         public string InitiatePayment()
@@ -61,7 +67,7 @@ namespace CharityYetiServices.Controllers
                 _logger.LogError(ex, ex.Message);
                 return Convert.ToString(new StatusCodeResult(StatusCodes.Status500InternalServerError));
             }
-            
+
             // Pass clientToken to the front-end so it can generate a Nonce
             return clientToken;
         }
