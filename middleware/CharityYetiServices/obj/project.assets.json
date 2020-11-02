@@ -2924,11 +2924,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Repos\\CharityYetiServices\\CharityYetiServices\\CharityYetiServices.csproj",
+      "projectUniqueName": "C:\\Repos\\charityyeti\\middleware\\CharityYetiServices\\CharityYetiServices.csproj",
       "projectName": "CharityYetiServices",
-      "projectPath": "C:\\Repos\\CharityYetiServices\\CharityYetiServices\\CharityYetiServices.csproj",
+      "projectPath": "C:\\Repos\\charityyeti\\middleware\\CharityYetiServices\\CharityYetiServices.csproj",
       "packagesPath": "C:\\Users\\mkloc\\.nuget\\packages\\",
-      "outputPath": "C:\\Repos\\CharityYetiServices\\CharityYetiServices\\obj\\",
+      "outputPath": "C:\\Repos\\charityyeti\\middleware\\CharityYetiServices\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
