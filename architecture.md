@@ -1,3 +1,4 @@
+<div class="mermaid">
 %% Architecture sequence diagram is written in Mermaid markdown syntax
 %% using Mermaid JS https://github.com/mermaid-js/mermaid
 sequenceDiagram
@@ -25,3 +26,4 @@ sequenceDiagram
     B ->> D: Update Transaction DB collection
     B -->> F: Back end sends status to front end
     B -->> T: Back end tweets successful donation to the original tweet
+</div>
