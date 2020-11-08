@@ -35,8 +35,8 @@ type config struct {
 
 // type to gather tweet data from an invocation of @CharityYeti
 type yetiInvokedData struct {
-	invoker         *twitter.User
-	honorary        *twitter.User
+	invoker         *twitterUser
+	honorary        *twitterUser
 	invokerTweetID  int64
 	originalTweetID int64
 }
@@ -51,18 +51,34 @@ type successfulDonationData struct {
 }
 
 // data we keep in Mongo
-type charityYetiData struct {
-	ID              string       `json:"_id" bson:"_id"`
-	OriginalTweetID int64        `json:"originalTweetID" bson:"originalTweetID"`
-	InvokerTweetID  int64        `json:"invokerTweetID" bson:"invokerTweetID"`
-	Invoker         twitter.User `json:"invoker" bson:"invoker"`
-	Honorary        twitter.User `json:"honorary" bson:"honorary"`
-	DonationValue   float32      `json:"donationValue" bson:"donationValue"`
+type donatorData struct {
+	ID        string      `json:"_id" bson:"_id"`
+	Donor     twitterUser `json:"donor" bson:"donor"`
+	Donations []donation  `json:"donations" bson:"donations"`
+}
+
+// a donation stores the transaction_id from BrainTree, the tweet
+// invoking charity yeti, the tweet that was donated towards,
+// the data for the user that was donated for, and the donation amount
+type donation struct {
+	TransactionID   string      `json:"transaction_id" bson:"transaction_id`
+	OriginalTweetID int64       `json:"originalTweetID" bson:"originalTweetID"`
+	InvokerTweetID  int64       `json:"invokerTweetID" bson:"invokerTweetID"`
+	Honorary        twitterUser `json:"honorary" bson"honorary"`
+	DonationValue   float32     `json:"donationValue" bson:"donationValue"`
+}
+
+// twitterUser is public data we want to store about honoraries and donors
+type twitterUser struct {
+	ID         int64  `json:"id" bson:"id"`
+	Name       string `json:"name" bson:"name"`
+	Email      string `json:"email" bson:"email"`
+	ScreenName string `json:"screenname" bson:"screenname"`
 }
 
 // aggregated Mongo data
 type charityYetiAggregation struct {
-	Map []charityYetiData `bson:"map"`
+	Map []donatorData `bson:"map"`
 }
 
 var srv *http.Server

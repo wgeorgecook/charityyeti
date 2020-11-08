@@ -21,7 +21,7 @@ func startServer() {
 	router.HandleFunc("/get/donated/all", getAllDonatedTweets)
 	router.HandleFunc("/get/donated", getDonatedTweets)
 	router.HandleFunc("/get/donors", getDonors)
-	router.HandleFunc("/braintree/payment", receiveBtRequest)
+	router.HandleFunc("/braintree/payment", receivePaymentRequest)
 	router.HandleFunc("/braintree/health", checkMiddlewareHealth)
 
 	// create a new http server with a default timeout for incoming requests
@@ -57,8 +57,8 @@ func goodDonation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Unmarshal the request into our charityYetiData struct
-	var c charityYetiData
+	// Unmarshal the request into our donatorData struct
+	var c donatorData
 	if err := json.Unmarshal(body, &c); err != nil {
 		log.Error(err)
 		if _, werr := w.Write([]byte(fmt.Sprintf("could not marshal request body: %v", err))); werr != nil {
@@ -107,7 +107,7 @@ func updateRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Unmarshal the request body bytes into our Mongo document struct
-	var update charityYetiData
+	var update donatorData
 	if err := json.Unmarshal(body, &update); err != nil {
 		// we can't unmarshal the body into our struct
 		log.Error(err)

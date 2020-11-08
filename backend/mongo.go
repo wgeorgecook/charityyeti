@@ -23,7 +23,7 @@ func initMongo(connectionURI string) *mongo.Client {
 	return client
 }
 
-func getDocument(id string) (*charityYetiData, error) {
+func getDocument(id string) (*donatorData, error) {
 	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
 
 	// create an OID bson primitive based on the ID that comes in on the request
@@ -33,7 +33,7 @@ func getDocument(id string) (*charityYetiData, error) {
 	}
 
 	// find and unmarshal the document to a struct we can return
-	var data charityYetiData
+	var data donatorData
 	filter := bson.M{"_id": oid}
 	err = collection.FindOne(context.Background(), filter).Decode(&data)
 	if err != nil {
@@ -43,22 +43,34 @@ func getDocument(id string) (*charityYetiData, error) {
 	return &data, nil
 }
 
-func updateDocument(u charityYetiData) (*charityYetiData, error) {
+func getDocumentByDonorID(id int64) (*donatorData, error) {
 	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
 
-	// create an OID bson primitive based on the ID that comes in on the request
-	oid, err := primitive.ObjectIDFromHex(u.ID)
+	// find and unmarshal the document to a struct we can return
+	var data donatorData
+	filter := bson.M{"donor.id": id}
+	err := collection.FindOne(context.Background(), filter).Decode(&data)
 	if err != nil {
 		return nil, err
 	}
 
-	// find and unmarshal the document to a struct we can return
-	var data charityYetiData
-	filter := bson.M{"_id": oid}
-	update := bson.M{"$set": bson.M{"donationValue": u.DonationValue}}
+	return &data, nil
+}
 
-	log.Info(fmt.Sprintf("Updating record %v with donationValue %v", u.ID, u.DonationValue))
-	err = collection.FindOneAndUpdate(context.Background(), filter, update).Decode(&data)
+func addDonation(documentId string, d donation) (*donatorData, error) {
+	collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
+
+	// find and unmarshal the document to a struct we can return
+	var data donatorData
+	filter := bson.M{"_id": documentId}
+	update := bson.M{
+		"$push": bson.M{
+			"donations": d,
+		},
+	}
+
+	log.Info(fmt.Sprintf("Updating donor %v with donation amount %v", documentId, d.DonationValue))
+	err := collection.FindOneAndUpdate(context.Background(), filter, update).Decode(&data)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +145,7 @@ func aggregateDonors() ([]bson.M, error) {
 			Key: "$match",
 			Value: bson.D{
 				primitive.E{
-					Key: "donationValue",
+					Key: "donations.donationValue",
 					Value: bson.D{
 						primitive.E{
 							Key:   "$gt",
@@ -150,7 +162,7 @@ func aggregateDonors() ([]bson.M, error) {
 			Value: bson.D{
 				primitive.E{
 					Key:   "_id",
-					Value: "$invoker.screenname",
+					Value: "$donor.screenname",
 				},
 				primitive.E{
 					Key: "total",
@@ -181,10 +193,10 @@ func aggregateDonors() ([]bson.M, error) {
 }
 
 // returns all data on tweets that have a successful donationValue logged to their document in Mongo
-func aggregateAllDonatedTweets() (*[]charityYetiData, error) {
+func aggregateAllDonatedTweets() (*[]donatorData, error) {
 	filter := bson.D{
 		primitive.E{
-			Key: "donationValue",
+			Key: "donations.donationValue",
 			Value: bson.D{
 				primitive.E{
 					Key:   "$gt",
@@ -200,7 +212,7 @@ func aggregateAllDonatedTweets() (*[]charityYetiData, error) {
 		return nil, err
 	}
 
-	var results []charityYetiData
+	var results []donatorData
 	if err = resultCursor.All(context.Background(), &results); err != nil {
 		log.Error(err)
 		return nil, err
