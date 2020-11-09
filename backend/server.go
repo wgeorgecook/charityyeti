@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -15,14 +14,15 @@ import (
 func startServer() {
 	// define the new router, define paths, and handlers on the router
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/donate", goodDonation)
-	router.HandleFunc("/update", updateRecord)
+	router.HandleFunc("/post/donate", receiveBtRequest)
 	router.HandleFunc("/get", getRecord)
+	router.HandleFunc("/get/record", getRecord)
+	router.HandleFunc("/get/token", getBtToken)
 	router.HandleFunc("/get/donated/all", getAllDonatedTweets)
 	router.HandleFunc("/get/donated", getDonatedTweets)
 	router.HandleFunc("/get/donors", getDonors)
-	router.HandleFunc("/braintree/payment", receiveBtRequest)
-	router.HandleFunc("/braintree/health", checkMiddlewareHealth)
+	router.HandleFunc("/get/health", getHealth)
+	router.HandleFunc("/middleware/health", checkMiddlewareHealth)
 
 	// create a new http server with a default timeout for incoming requests
 	timeout := 15 * time.Second
@@ -36,109 +36,17 @@ func startServer() {
 	}
 
 	// start the server
-	log.Info("New server started")
-	log.Fatal(srv.ListenAndServe())
-}
-
-// goodDonation captures the body off an incoming request and sets up the struct necessary to respond to a successful
-// donation event.
-func goodDonation(w http.ResponseWriter, r *http.Request) {
-
-	log.Info("Good donation received - responding to it")
-
-	// Read the incoming request body
-	body, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
-	if err != nil {
-		log.Error(err)
-		if _, werr := w.Write([]byte(fmt.Sprintf("could not read request body: %v", err))); werr != nil {
-			log.Error(werr)
-		}
-		return
-	}
-
-	// Unmarshal the request into our charityYetiData struct
-	var c charityYetiData
-	if err := json.Unmarshal(body, &c); err != nil {
-		log.Error(err)
-		if _, werr := w.Write([]byte(fmt.Sprintf("could not marshal request body: %v", err))); werr != nil {
-			log.Error(werr)
-		}
-		return
-	}
-
-	// set the values for a successfulDonationData struct
-	tweet := successfulDonationData{
-		invoker:         c.Invoker.ScreenName,
-		honorary:        c.Honorary.ScreenName,
-		donationValue:   c.DonationValue,
-		invokerTweetID:  c.InvokerTweetID,
-		originalTweetID: c.OriginalTweetID,
-	}
-
-	log.Info(fmt.Sprintf(
-		"{Data: { invoker: %v, honorary: %v, invokerTweetID: %v, originalTweetID: %v, donationValue: %v}}",
-		tweet.invoker, tweet.honorary, tweet.invokerTweetID, tweet.originalTweetID, tweet.donationValue))
-
-	err = respondToDonation(tweet)
-
-	if err != nil {
-		log.Error(err)
-		if _, err := w.Write([]byte(fmt.Sprintf("could not respond to donation: %v", err))); err != nil {
-			log.Error(err)
-		}
+	log.Info("Charity Yeti is now running. Please press CTRL + C to stop.")
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("listen: %s\n", err)
 	}
 }
 
-// updateRecord takes an update to a Mongo document in the body of the request and returns the pre-updated
-// document in the body of the response
-func updateRecord(w http.ResponseWriter, r *http.Request) {
-	log.Info("Incoming request to update Mongo document")
-
-	// Read out the request body into a byte stream we can digest
-	body, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
-	if err != nil {
-		// we can't read the incoming body
-		if _, err := w.Write([]byte(err.Error())); err != nil {
-			log.Error(err)
-		}
-		return
-	}
-
-	// Unmarshal the request body bytes into our Mongo document struct
-	var update charityYetiData
-	if err := json.Unmarshal(body, &update); err != nil {
-		// we can't unmarshal the body into our struct
-		log.Error(err)
-		if _, err := w.Write([]byte(err.Error())); err != nil {
-			log.Error(err)
-		}
-		return
-	}
-
-	// Pass the update into our actual update function
-	updated, err := updateDocument(update)
-	if err != nil {
-		// we we're able to update the Mongo document for whatever reason
-		log.Error(err)
-		if _, err := w.Write([]byte(err.Error())); err != nil {
-			log.Error(err)
-		}
-		return
-	}
-
-	// transform the data from Mongo to a byte map so we can write it back on the request
-	dataBytes, err := json.Marshal(updated)
-	if err != nil {
-		if _, err := w.Write([]byte(fmt.Sprintf("error marshaling Mongo document: %v", err))); err != nil {
-			log.Error(err)
-		}
-	}
-	if _, err := w.Write(dataBytes); err != nil {
-		log.Error(err)
-	}
-
+// getHealth returns a 200 OK and that's it
+func getHealth(w http.ResponseWriter, r *http.Request) {
+	log.Info("Checking backend health")
+	w.WriteHeader(http.StatusOK)
+	return
 }
 
 // getRecord takes a mongo _id in the body of the request and returns the collection with that data on the response body

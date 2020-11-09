@@ -12,6 +12,32 @@ import (
 	"github.com/dghubble/go-twitter/twitter"
 )
 
+// processInvocation parses an incoming tweet from the tweetQueue, pulls out the user who sent it, the ID of the
+// originating tweet, and passes it to respondToInvocation to send to Twitter
+func processInvocation() {
+
+	// loop forever to listen for incoming tweets
+	for {
+		// when a tweet gets received from the queue, start processing
+		incomingTweet := <-tweetQueue
+
+		honorary := getInReplyToTwitterUser(incomingTweet.InReplyToUserID)
+
+		yeti := yetiInvokedData{
+			invoker:         incomingTweet.User,
+			honorary:        honorary,
+			invokerTweetID:  incomingTweet.ID,
+			originalTweetID: incomingTweet.InReplyToStatusID,
+		}
+
+		err := respondToInvocation(yeti)
+		if err != nil {
+			log.Error(err)
+		}
+	}
+
+}
+
 // respondToInvocation receives an incoming tweet from a stream, and will respond to it with a link to donate via the
 // Charity Yeti website. The donation link includes an id for a Mongo document for the front end to retrieve and add
 // on the donation value after a successful donation.
@@ -67,6 +93,42 @@ func respondToInvocation(yeti yetiInvokedData) error {
 	return errors.New("no honorary to respond to")
 }
 
+// goodDonation gets called when BrainTree returns an OK transaction back to us and we know
+// a donation was processed successfully. It's responsible for updating the Mongo document
+// with the donation value, and then sends a tweet letting the original tweeter that
+// someone donated because of their tweets.
+func goodDonation(c charityYetiData) error {
+	log.Info("Good donation received - responding to it")
+
+	// set the values for a successfulDonationData struct
+	tweet := successfulDonationData{
+		invoker:         c.Invoker.ScreenName,
+		honorary:        c.Honorary.ScreenName,
+		donationValue:   c.DonationValue,
+		invokerTweetID:  c.InvokerTweetID,
+		originalTweetID: c.OriginalTweetID,
+	}
+
+	// update the Mongo document
+	if _, err := updateDocument(c); err != nil {
+		log.Errorf("Could not update Mongo after a good donation: %v", err)
+		// I don't want to return here becuase the donation was still successful
+		// and we want to spread awareness
+		// TODO: some sort of backup for this so we have record
+	}
+
+	log.Info(fmt.Sprintf(
+		"{Data: { invoker: %v, honorary: %v, invokerTweetID: %v, originalTweetID: %v, donationValue: %v}}",
+		tweet.invoker, tweet.honorary, tweet.invokerTweetID, tweet.originalTweetID, tweet.donationValue))
+
+	if err := respondToDonation(tweet); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
 // respondToDonation gets called after a successful donation. It parses the data sent from the Charity Yeti front end
 // client to make sure that our responses get sent to the original invocation tweet
 func respondToDonation(tweet successfulDonationData) error {
@@ -97,30 +159,4 @@ func respondToDonation(tweet successfulDonationData) error {
 		}
 	}
 	return nil
-}
-
-// processInvocation parses an incoming tweet from the tweetQueue, pulls out the user who sent it, the ID of the
-// originating tweet, and passes it to respondToInvocation to send to Twitter
-func processInvocation() {
-
-	// loop forever to listen for incoming tweets
-	for {
-		// when a tweet gets received from the queue, start processing
-		incomingTweet := <-tweetQueue
-
-		honorary := getInReplyToTwitterUser(incomingTweet.InReplyToScreenName)
-
-		yeti := yetiInvokedData{
-			invoker:         incomingTweet.User,
-			honorary:        honorary,
-			invokerTweetID:  incomingTweet.ID,
-			originalTweetID: incomingTweet.InReplyToStatusID,
-		}
-
-		err := respondToInvocation(yeti)
-		if err != nil {
-			log.Error(err)
-		}
-	}
-
 }

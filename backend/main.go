@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -30,6 +31,7 @@ type config struct {
 	Database           string `env:"DATABASE"`
 	Collection         string `env:"COLLECTION"`
 	MiddlewareEndpoint string `env:"MIDDLEWARE_ENDPOINT"`
+	MiddlewareToken    string `env:"MIDDLEWARE_TOKEN_ENDPOINT"`
 	MiddlewareHealth   string `env:"MIDDLEWARE_HEALTH"`
 }
 
@@ -58,6 +60,7 @@ type charityYetiData struct {
 	Invoker         twitter.User `json:"invoker" bson:"invoker"`
 	Honorary        twitter.User `json:"honorary" bson:"honorary"`
 	DonationValue   float32      `json:"donationValue" bson:"donationValue"`
+	DonationID      string       `json:"donationID" bson:"donationID"`
 }
 
 // aggregated Mongo data
@@ -134,17 +137,22 @@ func main() {
 	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-	log.Warn(<-ch)
+	log.Info(<-ch)
 
-	// Stop the stream
-	log.Info("Stopping stream")
-	stream.Stop()
-	log.Info("Stream stopped")
+	// set up the context so we can cancel any straggler connections
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer func() {
+		// Stop the stream
+		log.Info("Stopping stream")
+		stream.Stop()
+		log.Info("Stream stopped")
 
+		// cancel the context
+		cancel()
+	}()
 	// Stop the HTTP server
-	log.Info("Stopping server")
-	if err := srv.Shutdown(context.Background()); err != nil {
+	if err := srv.Shutdown(ctx); err != nil {
 		log.Errorf("could not gracefully shutdown server: %v", err)
 	}
-	log.Info("Server stopped")
+	defer log.Info("Server stopped")
 }

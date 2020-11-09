@@ -59,6 +59,11 @@ $params = [
 
 $result = $transaction->sale($params);
 
+
+// TODO: I now handle updating the database directly from 
+// the backend on a successful donation. Is there 
+// anything else you need me to return to you? If not 
+// I don't think we need this. I'll just return a 200 OK.
 if ($result->success) {
 	$post = new stdClass();
 	$post->_id = $id;
