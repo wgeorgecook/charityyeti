@@ -21,7 +21,7 @@ func processInvocation() {
 		// when a tweet gets received from the queue, start processing
 		incomingTweet := <-tweetQueue
 
-		honorary := getInReplyToTwitterUser(incomingTweet.InReplyToScreenName)
+		honorary := getInReplyToTwitterUser(incomingTweet.InReplyToUserID)
 
 		yeti := yetiInvokedData{
 			invoker:         incomingTweet.User,
