@@ -14,7 +14,7 @@ import (
 // Brain Tree opaquely.
 type brainTreeData struct {
 	Token      string            `json:"token,omitempty"`
-	Nonce      string            `json:"paymentMethodNonce,omitempty"`
+	Nonce      string            `json:"nonce,omitempty"`
 	Amount     string            `json:"amount,omitempty"`
 	DeviceData string            `json:"deviceData,omitempty"`
 	Options    []map[string]bool `json:"options,omitempty"`

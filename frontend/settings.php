@@ -1,4 +1,5 @@
 <?php
+// TODO: Are these secret?
 define("BRAINTREE_ENV", "sandbox");
 define("BRAINTREE_MID", "wmv3nh8skrjwtqr5");
 define('BRAINTREE_PUB', "5bb5f6dxjqg8hjc7");
