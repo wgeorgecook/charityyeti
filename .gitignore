@@ -7,3 +7,4 @@ charityyeti
 .idea
 appsettings*json
 bin
+backend/Dockerfile
