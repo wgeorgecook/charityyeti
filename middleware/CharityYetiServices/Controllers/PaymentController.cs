@@ -87,6 +87,13 @@ namespace CharityYetiServices.Controllers
             return Ok("You did a POST");
         }
 
+        // POST api/Payment/PostTest
+        [HttpPost("posttest")]
+        public ActionResult PostTest(string test)
+        {
+            return Ok($@"You sucessfully posted '{test}' to the service");
+        }
+
         // POST api/Payment/CreatePurchase
         [HttpPost("createpurchase")]
         public ActionResult CreatePurchase(Dictionary<string, string> orderData)
