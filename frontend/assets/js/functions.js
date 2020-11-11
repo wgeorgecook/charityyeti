@@ -29,15 +29,13 @@ jQuery(function ($){
 			
 		}
 		
-		doPaymentSuccess = function(nonce){
+		doPaymentSuccess = function(nonce, id, token){
 			$.ajax({
 				url: "/post/donate/",
 				method: 'POST',
 				data: {
-					// TODO: need to also send mongo document id as _id
-					// and client token as token
-					_id: "",
-					token: "",
+					_id: id,
+					token: token,
 					nonce: nonce,
 					amt: donationAmt,
 					device: deviceData
