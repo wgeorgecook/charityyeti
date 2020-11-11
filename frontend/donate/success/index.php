@@ -48,13 +48,16 @@ $gateway = new Braintree\Gateway([
 ]);
 $transaction = $gateway->transaction();
 
+// TODO: need to include token if it exists
 $params = [
-	'amount' => $amt,
-	'paymentMethodNonce' => $nonce,
-	'deviceData' => $device,
+	'payment_amount' => $amt,
+	'payment_method_nonce' => $nonce,
+	'device_data' => $device,
 	'options' => [
 		'submitForSettlement' => true
-	]
+	],
+	'_id' => $id,
+	'token' => '',
 ];
 
 $result = $transaction->sale($params);
