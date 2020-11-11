@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -14,9 +15,9 @@ import (
 // Brain Tree opaquely.
 type brainTreeData struct {
 	Token      string            `json:"token,omitempty"`
-	Nonce      string            `json:"nonce,omitempty"`
-	Amount     string            `json:"amount,omitempty"`
-	DeviceData string            `json:"deviceData,omitempty"`
+	Nonce      string            `json:"payment_method_nonce,omitempty"`
+	Amount     string            `json:"payment_amount,omitempty"`
+	DeviceData string            `json:"device_data,omitempty"`
 	Options    []map[string]bool `json:"options,omitempty"`
 	MongoID    string            `json:"_id,omitempty"`
 }
@@ -239,6 +240,10 @@ func doBrainTreeTransactionRequest(data brainTreeData) (*brainTreeTransaction, i
 	// https://developers.braintreepayments.com/reference/response/transaction/dotnet
 	var t brainTreeTransaction
 	if err := json.NewDecoder(resp.Body).Decode(&t); err != nil {
+		if err == io.ErrUnexpectedEOF {
+			log.Errorf("Unexpected end of file when reading response from middleware")
+			return nil, 500, err
+		}
 		// uh oh
 		log.Errorf("Could not decode response from middleware: %v", err)
 		return nil, 500, err
