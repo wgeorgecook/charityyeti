@@ -27,7 +27,7 @@ namespace CharityYetiServices.Controllers
             _logger = logger;
             _configuration = configuration;
 
-            // TODO: Tokenize in config file
+            // TODO: Tokenize environment in config file
             _gateway = new BraintreeGateway
             {
                 Environment = Braintree.Environment.SANDBOX,
@@ -37,21 +37,29 @@ namespace CharityYetiServices.Controllers
             };
         }
 
+        // GET api/Payment
+        [HttpGet]
+        public ActionResult Index()
+        {
+            return Ok();
+        }
+
+        // GET api/Payment/HealthCheck
         [HttpGet("healthcheck")]
         public ActionResult HealthCheck()
         {
             return Ok("Healthy AF");
         }
 
-        // GET api/<PaymentController>/GetClientToken
-        [HttpGet]
+        // GET api/Payment/InitiatePayment
+        [HttpGet("initiatepayment")]
         public string InitiatePayment()
         {
             return InitiatePayment(null);
         }
 
-        // GET api/<PaymentController>/GetClientToken/5
-        [HttpGet("{id}")]
+        // GET api/Payment/InitiatePayment/5
+        [HttpGet("initiatepayment/{customerId}")]
         public string InitiatePayment(string customerId)
         {
             // Generate a BT client token
@@ -72,7 +80,22 @@ namespace CharityYetiServices.Controllers
             return clientToken;
         }
 
-        [HttpPost]
+        // POST api/Payment/PostTest
+        [HttpPost("posttest")]
+        public ActionResult PostTest()
+        {
+            return Ok("You did a POST");
+        }
+
+        // POST api/Payment/PostTest
+        [HttpPost("posttest")]
+        public ActionResult PostTest(string test)
+        {
+            return Ok($@"You sucessfully posted '{test}' to the service");
+        }
+
+        // POST api/Payment/CreatePurchase
+        [HttpPost("createpurchase")]
         public ActionResult CreatePurchase(Dictionary<string, string> orderData)
         {
             string nonceFromTheClient = orderData["payment_method_nonce"] ?? orderData["payment_method_nonce"];
