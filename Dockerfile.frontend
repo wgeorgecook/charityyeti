@@ -3,4 +3,4 @@ FROM php:7-apache
 COPY ./frontend/ /var/www/html
 RUN chown -R www-data:www-data /var/www
 
-EXPOSE 80
+EXPOSE 8082
