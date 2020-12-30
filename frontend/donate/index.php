@@ -22,7 +22,7 @@ if((count($uri) > 2) && !empty($uri[2])){
 		$output = json_decode(curl_exec($ch));
 		curl_close($ch);
 		if(empty($output)){
-			$idmsg = "The provided ID appears to be incorrect";
+			$idmsg = "We were unable to find the tweet correlating to this ID";
 		} else {
 			if($output->donationValue){
 				$idmsg = "This ID has already been donated towards.";

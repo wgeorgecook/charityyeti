@@ -68,6 +68,8 @@ $result = $transaction->sale($params);
 // anything else you need me to return to you? If not 
 // I don't think we need this. I'll just return a 200 OK.
 if ($result->success) {
+	echo("Successful payment!");
+	return;
 	$post = new stdClass();
 	$post->_id = $id;
 	$post->donationValue = (int) $amt;
