@@ -184,7 +184,7 @@ Please note, JavaScript is required to process a donation. Please enable JavaScr
 
 				  // If this was a real integration, this is where you would
 				  // send the nonce to your server.
-				  doPaymentSuccess(payload.nonce, <?php echo $id ?>, ""); // TODO: send a client token if we have one
+				  doPaymentSuccess(payload.nonce, "<?php echo $id ?>", ""); // TODO: send a client token if we have one
 				});	
 			}
           }, false);
