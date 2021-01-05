@@ -48,34 +48,26 @@ $gateway = new Braintree\Gateway([
 ]);
 $transaction = $gateway->transaction();
 
-// TODO: need to include token if it exists
 $params = [
 	'payment_amount' => $amt,
 	'payment_method_nonce' => $nonce,
 	'device_data' => $device,
 	'options' => [
 		'submitForSettlement' => true
-	],
-	'_id' => $id,
-	'token' => '',
+	]
 ];
 
 $result = $transaction->sale($params);
+print_r($result);
 
-
-// TODO: I now handle updating the database directly from 
-// the backend on a successful donation. Is there 
-// anything else you need me to return to you? If not 
-// I don't think we need this. I'll just return a 200 OK.
 if ($result->success) {
-	echo("Successful payment!");
-	return;
 	$post = new stdClass();
 	$post->_id = $id;
 	$post->donationValue = (int) $amt;
 	$postval = json_encode($post);
+	print_r($postval);
 	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, DB_BASE . "/update");
+	curl_setopt($ch, CURLOPT_URL, DB_BASE . "/post/donate");
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $postval);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 	curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          

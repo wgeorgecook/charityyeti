@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -13,8 +14,8 @@ import (
 // port and path specified
 func startServer() {
 	// define the new router, define paths, and handlers on the router
-	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/post/donate", receiveBtRequest)
+	router := mux.NewRouter()
+	router.HandleFunc("/post/donate", successfulDonation)
 	router.HandleFunc("/get", getRecord)
 	router.HandleFunc("/get/record", getRecord)
 	router.HandleFunc("/get/token", getBtToken)
@@ -163,4 +164,55 @@ func getDonors(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 		return
 	}
+}
+
+// successfulDonation gets called from the front end when Brain Tree returns a success
+// after processing a payment. This wraps the update document and respond to invoker functions.
+func successfulDonation(w http.ResponseWriter, r *http.Request) {
+	log.Info("Successful donation incoming!")
+	defer r.Body.Close()
+
+	// get a byte slice from our request
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Errorf("could not read request body: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// print out the incoming request for debug purposes
+	log.Infof("request body: %v", string(bodyBytes))
+
+	// read the incoming data into a struct
+	var data charityYetiData
+	if err := json.Unmarshal(bodyBytes, &data); err != nil {
+		// if the front end sent us something we can't decode
+		log.Errorf("Could not decode request from frontend: %v", err)
+		http.Error(w, "could not decode request", http.StatusBadRequest)
+		return
+	}
+
+	// get the mongo document associated with this mongo id
+	doc, err := getDocument(data.ID)
+	if err != nil {
+		log.Errorf("could not get this document: %v", err)
+		http.Error(w, "no document matches the id provided", http.StatusBadRequest)
+		return
+	}
+
+	doc.DonationValue = data.DonationValue
+
+	// write the donation value back to the document
+	if err := goodDonation(*doc); err != nil {
+		log.Errorf("Good donation call failed: %v", err)
+		http.Error(w, fmt.Sprintf("An internal server error occured. We're very sorry, but here's some details: %v", err.Error()), 500)
+		return
+	}
+
+	// if everything is cool then we done
+	w.WriteHeader(200)
+
+	// not really necessary but I like closure
+	return
+
 }

@@ -4,7 +4,6 @@ var preflight;
 var donationAmt;
 var deviceData;
 var doClose;
-
 jQuery(function ($){
 	$(document).ready(function(){
 		$(".js").show();
@@ -29,13 +28,11 @@ jQuery(function ($){
 			
 		}
 		
-		doPaymentSuccess = function(nonce, id, token){
+		doPaymentSuccess = function(nonce){
 			$.ajax({
-				url: "/post/donate/",
+				url: "/donate/success/",
 				method: 'POST',
 				data: {
-					_id: id,
-					token: token,
 					nonce: nonce,
 					amt: donationAmt,
 					device: deviceData
