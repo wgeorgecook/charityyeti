@@ -49,9 +49,9 @@ $gateway = new Braintree\Gateway([
 $transaction = $gateway->transaction();
 
 $params = [
-	'payment_amount' => $amt,
-	'payment_method_nonce' => $nonce,
-	'device_data' => $device,
+	'amount' => $amt,
+	'paymentMethodNonce' => $nonce,
+	'deviceData' => $device,
 	'options' => [
 		'submitForSettlement' => true
 	]
