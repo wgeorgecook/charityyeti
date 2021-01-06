@@ -18,12 +18,10 @@ func startServer() {
 	router.HandleFunc("/post/donate", successfulDonation)
 	router.HandleFunc("/get", getRecord)
 	router.HandleFunc("/get/record", getRecord)
-	router.HandleFunc("/get/token", getBtToken)
 	router.HandleFunc("/get/donated/all", getAllDonatedTweets)
 	router.HandleFunc("/get/donated", getDonatedTweets)
 	router.HandleFunc("/get/donors", getDonors)
 	router.HandleFunc("/get/health", getHealth)
-	router.HandleFunc("/middleware/health", checkMiddlewareHealth)
 
 	// create a new http server with a default timeout for incoming requests
 	timeout := 15 * time.Second

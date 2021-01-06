@@ -33,6 +33,7 @@ type config struct {
 	MiddlewareEndpoint string `env:"MIDDLEWARE_ENDPOINT"`
 	MiddlewareToken    string `env:"MIDDLEWARE_TOKEN_ENDPOINT"`
 	MiddlewareHealth   string `env:"MIDDLEWARE_HEALTH"`
+	SendTweets         bool   `env:"SEND_TWEETS"`
 }
 
 // type to gather tweet data from an invocation of @CharityYeti
@@ -45,22 +46,24 @@ type yetiInvokedData struct {
 
 // type for building url params when we send a tweet
 type successfulDonationData struct {
-	invoker         string
-	honorary        string
-	donationValue   float32
-	invokerTweetID  int64
-	originalTweetID int64
+	invoker                string
+	honorary               string
+	donationValue          float32
+	invokerTweetID         int64
+	originalTweetID        int64
+	invokerResponseTweetID int64
 }
 
 // data we keep in Mongo
 type charityYetiData struct {
-	ID              string       `json:"_id" bson:"_id"`
-	OriginalTweetID int64        `json:"originalTweetID" bson:"originalTweetID"`
-	InvokerTweetID  int64        `json:"invokerTweetID" bson:"invokerTweetID"`
-	Invoker         twitter.User `json:"invoker" bson:"invoker"`
-	Honorary        twitter.User `json:"honorary" bson:"honorary"`
-	DonationValue   float32      `json:"donationValue" bson:"donationValue"`
-	DonationID      string       `json:"donationID" bson:"donationID"`
+	ID                     string       `json:"_id" bson:"_id"`
+	OriginalTweetID        int64        `json:"originalTweetID" bson:"originalTweetID"`
+	InvokerTweetID         int64        `json:"invokerTweetID" bson:"invokerTweetID"`
+	Invoker                twitter.User `json:"invoker" bson:"invoker"`
+	Honorary               twitter.User `json:"honorary" bson:"honorary"`
+	DonationValue          float32      `json:"donationValue" bson:"donationValue"`
+	DonationID             string       `json:"donationID" bson:"donationID"`
+	InvokerResponseTweetID int64        `json:"invokerResponseTweetID" bson:"invokerResponseTweetID"`
 }
 
 // aggregated Mongo data
@@ -72,7 +75,6 @@ var srv *http.Server
 var twitterClient *twitter.Client
 var stream *twitter.Stream
 var tweetQueue chan *twitter.Tweet
-var sendResponses bool
 var retweetGoods bool
 var log *zap.SugaredLogger
 var cfg config
@@ -85,14 +87,8 @@ func init() {
 	log = logger.Sugar()
 
 	// Parse command line flags
-	flag.BoolVar(&sendResponses, "sendResponses", false, "set to true to respond to tweets")
 	flag.BoolVar(&retweetGoods, "retweetGoods", false, "set to true to retweet the tweets that get the Yeti invoked on them")
 	flag.Parse()
-	if sendResponses {
-		log.Infow("WRITE MODE IS ENABLED")
-	} else {
-		log.Infow("No write access. This is a dry run.")
-	}
 
 	// Load environment variables from .env file
 	log.Infow("Loading env variables")
@@ -120,6 +116,13 @@ func main() {
 	token := oauth1.NewToken(cfg.AccessToken, cfg.AccessSecret)
 	httpClient := config.Client(oauth1.NoContext, token)
 	twitterClient = twitter.NewClient(httpClient)
+
+	// check if we're going to send tweets
+	if cfg.SendTweets {
+		log.Infow("WRITE MODE IS ENABLED")
+	} else {
+		log.Infow("No write access. This is a dry run.")
+	}
 
 	// tweetQueue is a channel that holds tweets we've heard while listening to the stream
 	tweetQueue = make(chan *twitter.Tweet)

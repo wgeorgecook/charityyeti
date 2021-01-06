@@ -44,12 +44,12 @@ func processInvocation() {
 func respondToInvocation(yeti yetiInvokedData) error {
 	if yeti.honorary.ScreenName != "" {
 		dataID := primitive.NewObjectID()
-		donateLink := fmt.Sprintf("https://charityyeti.com?id=%v", dataID.Hex())
-		tweetText := fmt.Sprintf("Hi @%s! You can donate to PiH on @%s's behalf here: %s", yeti.invoker.ScreenName, yeti.honorary.ScreenName, donateLink)
+		donateLink := fmt.Sprintf("https://charityyeti.casadecook.com?id=%v", dataID.Hex()) // TODO: change this to production
+		tweetText := fmt.Sprintf("Hi there! You can donate to PiH on @%s's behalf with this unique link: %s", yeti.honorary.ScreenName, donateLink)
 
-		params := twitter.StatusUpdateParams{InReplyToStatusID: yeti.invokerTweetID}
+		// params := twitter.StatusUpdateParams{InReplyToStatusID: yeti.invokerTweetID}
 
-		if sendResponses {
+		if cfg.SendTweets {
 			// create the record in Mongo
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
@@ -70,8 +70,41 @@ func respondToInvocation(yeti yetiInvokedData) error {
 
 			// send the tweet
 			log.Infow("Actually sending this!")
-			_, _, err = twitterClient.Statuses.Update(tweetText, &params)
+			// responseTweet, _, err := twitterClient.Statuses.Update(tweetText, &params)
+			// if err != nil {
+			// 	return err
+			// }
+
+			// // now that we have a response tweet, we need to save it's ID back to the db so we can reply to this later
+			// update := bson.M{
+			// 	"$set": bson.M{"invokerResponseTweetID": &responseTweet.ID},
+			// }
+
+			// filter := bson.M{"_id": dataID}
+
+			// _, err = collection.UpdateOne(ctx, filter, update)
+			// if err != nil {
+			// 	log.Errorf("could not update document with this responded tweet ID: %v", err)
+			// 	return err
+			// }
+
+			// send a DM
+			_, _, err = twitterClient.DirectMessages.EventsNew(&twitter.DirectMessageEventsNewParams{
+				Event: &twitter.DirectMessageEvent{
+					Type: "message_create",
+					Message: &twitter.DirectMessageEventMessage{
+						Target: &twitter.DirectMessageTarget{
+							RecipientID: yeti.invoker.IDStr,
+						},
+						Data: &twitter.DirectMessageData{
+							Text: tweetText,
+						},
+					},
+				},
+			})
+
 			if err != nil {
+				log.Errorf("Could not send a DM: %v", err)
 				return err
 			}
 		}
@@ -93,8 +126,8 @@ func respondToInvocation(yeti yetiInvokedData) error {
 	return errors.New("no honorary to respond to")
 }
 
-// goodDonation gets called when BrainTree returns an OK transaction back to us and we know
-// a donation was processed successfully. It's responsible for updating the Mongo document
+// goodDonation gets called when BrainTree returns an OK transaction back to us from the frontend
+// and we know a donation was processed successfully. It's responsible for updating the Mongo document
 // with the donation value, and then sends a tweet letting the original tweeter that
 // someone donated because of their tweets.
 func goodDonation(c charityYetiData) error {
@@ -107,6 +140,7 @@ func goodDonation(c charityYetiData) error {
 		donationValue:   c.DonationValue,
 		invokerTweetID:  c.InvokerTweetID,
 		originalTweetID: c.OriginalTweetID,
+		// invokerResponseTweetID: c.InvokerResponseTweetID,
 	}
 
 	// update the Mongo document
@@ -132,15 +166,15 @@ func goodDonation(c charityYetiData) error {
 // respondToDonation gets called after a successful donation. It parses the data sent from the Charity Yeti front end
 // client to make sure that our responses get sent to the original invocation tweet
 func respondToDonation(tweet successfulDonationData) error {
-	tweetText := fmt.Sprintf("Good news, %v! %v thought your tweet was so great, they donated $%v to Partner's in Health on your behalf! See https://charityyeti.com for details.", tweet.honorary, tweet.invoker, tweet.donationValue)
+	tweetText := fmt.Sprintf("Good news! @%v thought your tweet was so great, they donated $%v to Partner's in Health on your behalf! See https://charityyeti.com for details.", tweet.invoker, tweet.donationValue)
 	log.Debugf(fmt.Sprintf("Tweet to send: %+v", tweetText))
 	log.Debugf(fmt.Sprintf("Responding to: %v", tweet.invokerTweetID))
 
 	params := &twitter.StatusUpdateParams{
-		InReplyToStatusID: tweet.invokerTweetID,
+		InReplyToStatusID: tweet.invokerTweetID, // tweet.invokerResponseTweetID,
 	}
 
-	if sendResponses {
+	if cfg.SendTweets {
 		log.Infow("Actually sending this!")
 		_, _, err := twitterClient.Statuses.Update(tweetText, params)
 
