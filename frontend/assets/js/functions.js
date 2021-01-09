@@ -11,6 +11,7 @@ jQuery(function ($){
 		
 		preflight = function(){
 			$(".blackout").show();
+			$(".blackout").addClass("loading");
 			$(".blackout-text").removeClass('success');
 			$(".blackout-text").addClass('fail');
 			donationAmt = document.forms[0].amount.value
@@ -53,6 +54,7 @@ jQuery(function ($){
 		}
 		
 		var writeMsg = function(x){
+			$(".blackout").removeClass("loading");
 			$(".blackout-text").html('<div>' + x + '</div><button id="close-btn" onclick="doClose()">CLOSE</button>');
 			$(".blackout-text").css('opacity', '1');
 		}
