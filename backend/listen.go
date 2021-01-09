@@ -48,3 +48,7 @@ func listen(client *twitter.Client) {
 	go demux.HandleChan(stream.Messages)
 
 }
+
+// TODO: create a listener that will check for 'STOP' and 'START' to opt in/out of Charity Yeti
+// and add/remove their twitter ID to a deny list of users we are not allowed to tweet links
+// or DM to

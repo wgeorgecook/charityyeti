@@ -72,8 +72,14 @@ func generateResponseTweetText(link string) string {
 	thanksIdx := randomizer.Intn(len(thanks))
 	callToActionIdx := randomizer.Intn(len(callToAction))
 
-	// now start sticking them together
-	return fmt.Sprintf("%v %v %v %v\nReply 'STOP' to opt out.", greetings[greetingsIdx], thanks[thanksIdx], callToAction[callToActionIdx], link)
+	// now start sticking them together but check and make sure our length is less than the 240 character requirement
+	tweetText := fmt.Sprintf("%v %v %v %v\nReply 'STOP' to opt out.", greetings[greetingsIdx], thanks[thanksIdx], callToAction[callToActionIdx], link)
+	if len(tweetText) > 240 {
+		log.Errorf("Tweet/DM text is too long. Cannot exceed 240 but we made a %v character long string", len(tweetText))
+		return generateResponseTweetText(link)
+	} else {
+		return tweetText
+	}
 
 }
 
@@ -201,10 +207,57 @@ func goodDonation(c charityYetiData) error {
 	return nil
 }
 
+// generateSuccessfulDonationTweetText mixes and matches response words to generate some different, human sounding phrases
+// to make us look less spammy
+func generateSuccessfulDonationTweetText(invoker string, donation float32) string {
+	// our message strings we're gonna mix and match
+	greetings := []string{
+		"Good news!",
+		"Now this is exciting!",
+		"World suck has decreased because of you!",
+		"Congratulations!",
+		"Surpise! Some good news coming your way -",
+		"*Excited Yeti Noises*",
+	}
+	thanks := []string{
+		fmt.Sprintf("Thanks to this extremely excellent tweet @%v donated $%v to Partner's in Health!", invoker, donation),
+		fmt.Sprintf("@%v thought your tweet was so great, they donated $%v to Partner's in Health to celebrate!", invoker, donation),
+		fmt.Sprintf("@%v loved your tweet so much they gave $%v to Partner's in Health to show some gratitude!", invoker, donation),
+		fmt.Sprintf("@%v donated $%v to Partner's because your tweet was THAT GOOD.", invoker, donation),
+		fmt.Sprintf("Partner's In Health has $%v extra thanks to this awesome tweet that @%v loved so much.", donation, invoker),
+	}
+
+	congrats := []string{
+		"Congrats!",
+		"Great job!",
+		"Way to go!",
+		"Thank you!",
+		"Keep it up!",
+		"How neat is that!",
+	}
+
+	// grab random index from each
+	source := rand.NewSource(time.Now().Unix())
+	randomizer := rand.New(source) // initialize local pseudorandom generator
+	greetingsIdx := randomizer.Intn(len(greetings))
+	thanksIdx := randomizer.Intn(len(thanks))
+	congratsIdx := randomizer.Intn(len(congrats))
+
+	// now start sticking them together but check and make sure our length is less than the 240 character requirement
+	tweetText := fmt.Sprintf("%v %v %v", greetings[greetingsIdx], thanks[thanksIdx], congrats[congratsIdx])
+	if len(tweetText) > 240 {
+		log.Errorf("Tweet text is too long. Cannot exceed 240 but we made a %v character long string", len(tweetText))
+		return generateSuccessfulDonationTweetText(invoker, donation)
+	} else {
+		return tweetText
+	}
+
+}
+
 // respondToDonation gets called after a successful donation. It parses the data sent from the Charity Yeti front end
 // client to make sure that our responses get sent to the original invocation tweet
 func respondToDonation(tweet successfulDonationData) error {
-	tweetText := fmt.Sprintf("Good news! @%v thought your tweet was so great, they donated $%v to Partner's in Health on your behalf! See https://charityyeti.com for details.", tweet.invoker, tweet.donationValue)
+	tweetText := generateSuccessfulDonationTweetText(tweet.invoker, tweet.donationValue)
 	log.Debugf(fmt.Sprintf("Tweet to send: %+v", tweetText))
 	log.Debugf(fmt.Sprintf("Responding to: %v", tweet.invokerTweetID))
 
