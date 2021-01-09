@@ -180,10 +180,12 @@ input[type=checkbox]{
 	top: 0; bottom: 0; left: 0; right: 0;
 	background-color: rgba(0,0,0,0.8);
 	display: none;
-	background-image: url('../imgs/loading.gif');
 	background-size: 150px 150px;
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
+}
+.blackout.loading{
+	background-image: url('../imgs/loading.gif');
 }
 .blackout-text{
 	position: relative;
