@@ -33,7 +33,9 @@ func listen(client *twitter.Client) {
 	// These params configure what we are filtering our string for.
 	// In this case, it's the user we're monitoring
 	filterParams := &twitter.StreamFilterParams{
-		// []string{"Hey @charityyeti"}, // Makes sure we don't accidentally reply to folks chatting with us TOOD: make this prod
+		// []string{"Hey @charityyeti"}, // Makes sure we don't accidentally reply to folks chatting with us TODO: make this prod
+		// TODO: check for other invocations (like just @mentioning) and dump those into some sort of human readable
+		// table or something so we can follow up with people trying to interact with us but are doing it wrong.
 		Track:         []string{"Hey @pihbot1"},
 		StallWarnings: twitter.Bool(true),
 	}

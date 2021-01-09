@@ -25,13 +25,6 @@ services:
         image: williamcook/charityyeti-frontend:${TAG_VERSION}
         ports: 
             - "8082:80"
-    middleware:
-        build:
-            context: ./middleware
-            dockerfile: ./CharityYetiServices/Dockerfile
-        image: williamcook/charityyeti-middleware:${TAG_VERSION}
-        env_file: 
-            - .env
     proxy:
         build:
             context: .
