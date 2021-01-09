@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -38,6 +39,44 @@ func processInvocation() {
 
 }
 
+// generateResponseTweetText mixes and matches response words to generate some different, human sounding phrases
+// to make us look less spammy
+func generateResponseTweetText(link string) string {
+	// our message strings we're gonna mix and match
+	greetings := []string{
+		"Hey there!",
+		"Hello!",
+		"Hi!",
+		"Glad you reached out!",
+		"Howdy!",
+		"*Excited Yeti Noises*",
+	}
+	thanks := []string{
+		"Thanks for reaching out.",
+		"Glad you tagged us.",
+		"We're stoked for this awesome tweet.",
+		"Thanks for wanting to help out!",
+		"You clearly did not forget to be awesome today.",
+	}
+	callToAction := []string{
+		"Here's a personalized link:",
+		"One hot and fresh donation link coming up:",
+		"Here's a unique link on Charity Yeti just for you:",
+		"You can find your personal Charity Yeti here:",
+	}
+
+	// grab random index from each
+	source := rand.NewSource(time.Now().Unix())
+	randomizer := rand.New(source) // initialize local pseudorandom generator
+	greetingsIdx := randomizer.Intn(len(greetings))
+	thanksIdx := randomizer.Intn(len(thanks))
+	callToActionIdx := randomizer.Intn(len(callToAction))
+
+	// now start sticking them together
+	return fmt.Sprintf("%v %v %v %v\nReply 'STOP' to opt out.", greetings[greetingsIdx], thanks[thanksIdx], callToAction[callToActionIdx], link)
+
+}
+
 // respondToInvocation receives an incoming tweet from a stream, and will respond to it with a link to donate via the
 // Charity Yeti website. The donation link includes an id for a Mongo document for the front end to retrieve and add
 // on the donation value after a successful donation.
@@ -45,9 +84,7 @@ func respondToInvocation(yeti yetiInvokedData) error {
 	if yeti.honorary.ScreenName != "" {
 		dataID := primitive.NewObjectID()
 		donateLink := fmt.Sprintf("https://charityyeti.casadecook.com?id=%v", dataID.Hex()) // TODO: change this to production
-		tweetText := fmt.Sprintf("Hi there! You can donate to PiH on @%s's behalf with this unique link: %s", yeti.honorary.ScreenName, donateLink)
-
-		// params := twitter.StatusUpdateParams{InReplyToStatusID: yeti.invokerTweetID}
+		tweetText := generateResponseTweetText(donateLink)
 
 		if cfg.SendTweets {
 			// create the record in Mongo
@@ -70,23 +107,6 @@ func respondToInvocation(yeti yetiInvokedData) error {
 
 			// send the tweet
 			log.Infow("Actually sending this!")
-			// responseTweet, _, err := twitterClient.Statuses.Update(tweetText, &params)
-			// if err != nil {
-			// 	return err
-			// }
-
-			// // now that we have a response tweet, we need to save it's ID back to the db so we can reply to this later
-			// update := bson.M{
-			// 	"$set": bson.M{"invokerResponseTweetID": &responseTweet.ID},
-			// }
-
-			// filter := bson.M{"_id": dataID}
-
-			// _, err = collection.UpdateOne(ctx, filter, update)
-			// if err != nil {
-			// 	log.Errorf("could not update document with this responded tweet ID: %v", err)
-			// 	return err
-			// }
 
 			// send a DM
 			_, _, err = twitterClient.DirectMessages.EventsNew(&twitter.DirectMessageEventsNewParams{
@@ -105,7 +125,25 @@ func respondToInvocation(yeti yetiInvokedData) error {
 
 			if err != nil {
 				log.Errorf("Could not send a DM: %v", err)
-				return err
+				// if we can't send a DM (like they have DMs off or something), we fall back on a good old fashioned tweet reply
+				params := twitter.StatusUpdateParams{InReplyToStatusID: yeti.invokerTweetID}
+				responseTweet, _, err := twitterClient.Statuses.Update(tweetText, &params)
+				if err != nil {
+					return err
+				}
+
+				// now that we have a response tweet, we need to save it's ID back to the db so we can reply to this later
+				update := bson.M{
+					"$set": bson.M{"invokerResponseTweetID": &responseTweet.ID},
+				}
+
+				filter := bson.M{"_id": dataID}
+
+				_, err = collection.UpdateOne(ctx, filter, update)
+				if err != nil {
+					log.Errorf("could not update document with this responded tweet ID: %v", err)
+					return err
+				}
 			}
 		}
 
@@ -135,12 +173,12 @@ func goodDonation(c charityYetiData) error {
 
 	// set the values for a successfulDonationData struct
 	tweet := successfulDonationData{
-		invoker:         c.Invoker.ScreenName,
-		honorary:        c.Honorary.ScreenName,
-		donationValue:   c.DonationValue,
-		invokerTweetID:  c.InvokerTweetID,
-		originalTweetID: c.OriginalTweetID,
-		// invokerResponseTweetID: c.InvokerResponseTweetID,
+		invoker:                c.Invoker.ScreenName,
+		honorary:               c.Honorary.ScreenName,
+		donationValue:          c.DonationValue,
+		invokerTweetID:         c.InvokerTweetID,
+		originalTweetID:        c.OriginalTweetID,
+		invokerResponseTweetID: c.InvokerResponseTweetID,
 	}
 
 	// update the Mongo document
@@ -170,13 +208,22 @@ func respondToDonation(tweet successfulDonationData) error {
 	log.Debugf(fmt.Sprintf("Tweet to send: %+v", tweetText))
 	log.Debugf(fmt.Sprintf("Responding to: %v", tweet.invokerTweetID))
 
-	params := &twitter.StatusUpdateParams{
-		InReplyToStatusID: tweet.invokerTweetID, // tweet.invokerResponseTweetID,
+	var params twitter.StatusUpdateParams
+	if tweet.invokerResponseTweetID != 0 {
+		// We couldn't DM this person, so we need to respond on our tweet with the donation link
+		params = twitter.StatusUpdateParams{
+			InReplyToStatusID: tweet.invokerResponseTweetID,
+		}
+	} else {
+		// This was from a DM, so we need to respond on the invoker's tweet
+		params = twitter.StatusUpdateParams{
+			InReplyToStatusID: tweet.invokerTweetID,
+		}
 	}
 
 	if cfg.SendTweets {
 		log.Infow("Actually sending this!")
-		_, _, err := twitterClient.Statuses.Update(tweetText, params)
+		_, _, err := twitterClient.Statuses.Update(tweetText, &params)
 
 		if err != nil {
 			return err
