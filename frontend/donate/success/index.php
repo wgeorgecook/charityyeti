@@ -58,14 +58,12 @@ $params = [
 ];
 
 $result = $transaction->sale($params);
-print_r($result);
 
 if ($result->success) {
 	$post = new stdClass();
 	$post->_id = $id;
 	$post->donationValue = (int) $amt;
 	$postval = json_encode($post);
-	print_r($postval);
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, DB_BASE . "/post/donate");
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $postval);
