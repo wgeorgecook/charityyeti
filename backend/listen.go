@@ -19,16 +19,26 @@ func listen(client *twitter.Client) {
 
 	// Demux allows us to use the twitter library handlers
 	// and not need to type coerce or switch on incoming
-	// messages. In this case, we're just printing out the
-	// tweet object as it comes
+	// messages.
 	demux := twitter.NewSwitchDemux()
+
+	// In this case, we're printing out the
+	// tweet object as it comes and dropping it on a channel
+	// for processing
 	demux.Tweet = func(tweet *twitter.Tweet) {
 		// send this tweet to a queue for processing
 		log.Infof("Sending incoming tweet (%v) to channel", tweet.IDStr)
 		tweetQueue <- tweet
 	}
 
-	log.Infow("Starting Stream")
+	// In this case, we're printing out the direct message text as it
+	// comes in and sending it off for processing on another channel
+	demux.DM = func(dm *twitter.DirectMessage) {
+		log.Infof("Sending incoming DM (%v) to channel", dm.Text)
+		dmQueue <- dm
+	}
+
+	log.Infow("Starting Streams")
 
 	// These params configure what we are filtering our string for.
 	// In this case, it's the user we're monitoring
@@ -39,16 +49,19 @@ func listen(client *twitter.Client) {
 		Track:         []string{"Hey @pihbot1"},
 		StallWarnings: twitter.Bool(true),
 	}
-	stream, err = client.Streams.Filter(filterParams)
+	tweetStream, err = client.Streams.Filter(filterParams)
 	if err != nil {
-		log.Fatalf("Can't connect to stream: %v", err)
+		log.Fatalf("Can't connect to tweet stream: %v", err)
 	}
 
-	// Run the stream handler in its own goroutine
-	go demux.HandleChan(stream.Messages)
+	// Run the tweet stream handler in its own goroutine
+	go demux.HandleChan(tweetStream.Messages)
+
+	// Run the DM stream handler in it's own gorouting
+	dmStream, err = client.Streams.Filter(filterParams)
+	if err != nil {
+		log.Fatalf("Can't connect to tweet stream: %v", err)
+	}
+	go demux.HandleChan(dmStream.Messages)
 
 }
-
-// TODO: create a listener that will check for 'STOP' and 'START' to opt in/out of Charity Yeti
-// and add/remove their twitter ID to a deny list of users we are not allowed to tweet links
-// or DM to

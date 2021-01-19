@@ -30,6 +30,7 @@ type config struct {
 	ConnectionURI      string `env:"MONGO_URI"`
 	Database           string `env:"DATABASE"`
 	Collection         string `env:"COLLECTION"`
+	BlockList          string `env:"BLOCK_LIST"`
 	MiddlewareEndpoint string `env:"MIDDLEWARE_ENDPOINT"`
 	MiddlewareToken    string `env:"MIDDLEWARE_TOKEN_ENDPOINT"`
 	MiddlewareHealth   string `env:"MIDDLEWARE_HEALTH"`
@@ -73,8 +74,10 @@ type charityYetiAggregation struct {
 
 var srv *http.Server
 var twitterClient *twitter.Client
-var stream *twitter.Stream
+var tweetStream *twitter.Stream
+var dmStream *twitter.Stream
 var tweetQueue chan *twitter.Tweet
+var dmQueue chan *twitter.DirectMessage
 var retweetGoods bool
 var log *zap.SugaredLogger
 var cfg config
@@ -127,6 +130,9 @@ func main() {
 	// tweetQueue is a channel that holds tweets we've heard while listening to the stream
 	tweetQueue = make(chan *twitter.Tweet)
 
+	// dmQueue is a channel that holds all the DMs we get while listening to incoming DMs
+	dmQueue = make(chan *twitter.DirectMessage)
+
 	// Opens the Twitter feed for listening and sending initial tweet response
 	// Must set writeable=true for write access
 	go listen(twitterClient)
@@ -145,10 +151,13 @@ func main() {
 	// set up the context so we can cancel any straggler connections
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer func() {
-		// Stop the stream
-		log.Info("Stopping stream")
-		stream.Stop()
-		log.Info("Stream stopped")
+		// Stop the streams
+		log.Info("Stopping tweet stream")
+		tweetStream.Stop()
+		log.Info("Tweet tream stopped")
+		log.Info("Stopping DM stream")
+		dmStream.Stop()
+		log.Info("DM tream stopped")
 
 		// cancel the context
 		cancel()

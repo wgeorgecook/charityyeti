@@ -66,6 +66,76 @@ func updateDocument(u charityYetiData) (*charityYetiData, error) {
 	return &data, nil
 }
 
+// existsInBlockList takes in a user ID and checks the block list, returning whether
+// or not we have that user in the block list
+func existsInBlockList(userID int64) bool {
+	log.Infof("Searching for %v in block list", userID)
+	// find the record in Mongo
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	filter := bson.M{
+		"user_id": userID,
+	}
+	collection := mongoClient.Database(cfg.Database).Collection(cfg.BlockList)
+	result := collection.FindOne(ctx, filter)
+	if result == nil {
+		log.Debug("user is not in the block list")
+		return false
+	}
+	log.Debug("user is in the block list")
+	return true
+}
+
+// addBlockList takes a user ID from a twitter.User as twitter.User.ID (int64) and adds that
+// ID to our block list
+func addBlockList(userID int64) error {
+	log.Infof("Adding %v to our block list", userID)
+	alreadyBlocked := existsInBlockList(userID)
+	if alreadyBlocked {
+		// no need to try and insert again
+		log.Infof("user %v is already blocked", userID)
+		return nil
+	}
+	// create the record in Mongo
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	data := bson.M{
+		"user_id": userID,
+	}
+	collection := mongoClient.Database(cfg.Database).Collection(cfg.BlockList)
+	_, err := collection.InsertOne(ctx, data)
+	if err != nil {
+		log.Errorf("could not create document in block list: %v", err)
+		return err
+	}
+	return nil
+}
+
+// removeBlockList takes a user ID from a twitter.User as twitter.User.ID (int64) and removes
+// that ID from our block list
+func removeBlockList(userID int64) error {
+	log.Infof("Removing %v from our block list", userID)
+	alreadyBlocked := existsInBlockList(userID)
+	if !alreadyBlocked {
+		// user doesn't exist in the block list so no need to try and remove
+		log.Infof("user %v is not blocked", userID)
+		return nil
+	}
+	// delete the record in Mongo
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	filter := bson.M{
+		"user_id": userID,
+	}
+	collection := mongoClient.Database(cfg.Database).Collection(cfg.BlockList)
+	_, err := collection.DeleteOne(ctx, filter)
+	if err != nil {
+		log.Errorf("could not remove document from block list: %v", err)
+		return err
+	}
+	return nil
+}
+
 // returns an aggregated collection matched by OriginalTweetID
 // and sum up all the donationValues that match that OriginalTweetID
 // TODO: pagination
