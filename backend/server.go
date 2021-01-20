@@ -1,6 +1,9 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +12,10 @@ import (
 
 	"github.com/gorilla/mux"
 )
+
+type CRCResponse struct {
+	ResponseToken string `json:"response_token"`
+}
 
 // startServer spins up an http listener for this service on the
 // port and path specified
@@ -22,6 +29,7 @@ func startServer() {
 	router.HandleFunc("/get/donated", getDonatedTweets)
 	router.HandleFunc("/get/donors", getDonors)
 	router.HandleFunc("/get/health", getHealth)
+	router.HandleFunc("/webhook/listen", webhookListener)
 
 	// create a new http server with a default timeout for incoming requests
 	timeout := 15 * time.Second
@@ -45,6 +53,56 @@ func startServer() {
 func getHealth(w http.ResponseWriter, r *http.Request) {
 	log.Info("Checking backend health")
 	w.WriteHeader(http.StatusOK)
+	return
+}
+
+// webhookListener receives POST requests from Twitter with the payloads we subscribe to
+// they will sometimes send a Challenge-Response Check via GET request, so we first
+// check for that before processing the request
+func webhookListener(w http.ResponseWriter, r *http.Request) {
+	log.Info("Received webhook payload")
+	defer r.Body.Close()
+
+	// check for the CRC
+	if token, ok := r.URL.Query()["crc_token"]; ok {
+		// this is a challenge, so we need to take this token and
+		// make an HMAC SHA-256 hash using it and our client secret
+		hash := hmac.New(sha256.New, []byte(cfg.ConsumerSecret))
+
+		// write the incoming crc_token using the hash
+		hash.Write([]byte(token[0]))
+
+		// save the sha as a string we can return to Twitter
+		sha := hex.EncodeToString(hash.Sum(nil))
+
+		// marshal our response token
+		response := CRCResponse{ResponseToken: fmt.Sprintf("sha256=%v", sha)}
+		respBytes, err := json.Marshal(response)
+		if err != nil {
+			// ope
+			log.Errorf("could not marshal response token: %v", err)
+			http.Error(w, "I'm not even sure how this happens, but there was an error", 500)
+			return
+		}
+
+		// write our response back on the request
+		w.WriteHeader(http.StatusOK)
+		w.Write(respBytes)
+
+		// we're done here
+		return
+	}
+
+	// read out the request
+	reqBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Errorf("could not read webhook request: %v", err)
+		http.Error(w, "malformed request", 400)
+		return
+	}
+
+	// print it out for debug
+	log.Debugf("incoming webhook payload: %v", string(reqBytes))
 	return
 }
 

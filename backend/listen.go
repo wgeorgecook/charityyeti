@@ -38,17 +38,17 @@ func listen(client *twitter.Client) {
 		dmQueue <- dm
 	}
 
-	log.Infow("Starting Streams")
-
 	// These params configure what we are filtering our string for.
 	// In this case, it's the user we're monitoring
 	filterParams := &twitter.StreamFilterParams{
 		// []string{"Hey @charityyeti"}, // Makes sure we don't accidentally reply to folks chatting with us TODO: make this prod
 		// TODO: check for other invocations (like just @mentioning) and dump those into some sort of human readable
 		// table or something so we can follow up with people trying to interact with us but are doing it wrong.
-		Track:         []string{"Hey @pihbot1"},
+		Track:         []string{"Hey @charityetidev"},
 		StallWarnings: twitter.Bool(true),
 	}
+
+	log.Infow("Starting tweet stream")
 	tweetStream, err = client.Streams.Filter(filterParams)
 	if err != nil {
 		log.Fatalf("Can't connect to tweet stream: %v", err)
@@ -58,9 +58,15 @@ func listen(client *twitter.Client) {
 	go demux.HandleChan(tweetStream.Messages)
 
 	// Run the DM stream handler in it's own gorouting
-	dmStream, err = client.Streams.Filter(filterParams)
+	fireHoseParams := &twitter.StreamFirehoseParams{
+		StallWarnings: twitter.Bool(true),
+		Language:      []string{"en"},
+	}
+
+	log.Infow("Starting dm stream")
+	dmStream, err = client.Streams.Firehose(fireHoseParams)
 	if err != nil {
-		log.Fatalf("Can't connect to tweet stream: %v", err)
+		log.Fatalf("Can't connect to dm stream: %v", err)
 	}
 	go demux.HandleChan(dmStream.Messages)
 
