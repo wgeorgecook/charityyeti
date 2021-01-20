@@ -4,7 +4,8 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.backend
-        image: charityyeti-backend:${TAG_VERSION}
+        # image: ${DOCKER_REGISTRY}/charity-yeti-test-backend:${TAG_VERSION}
+        image: williamcook/charityyeti-backend:${TAG_VERSION}
         env_file: 
             - .env
         environment:
@@ -22,6 +23,15 @@ services:
         build:
             context: .
             dockerfile: Dockerfile.frontend
-        image: charityyeti-frontend:${TAG_VERSION}
+        # image: ${DOCKER_REGISTRY}/charity-yeti-test-frontend:${TAG_VERSION}
+        image: williamcook/charityyeti-frontend:${TAG_VERSION}
         ports: 
+            - "8082:80"
+    proxy:
+        build:
+            context: .
+            dockerfile: Dockerfile.proxy
+        image: williamcook/charityyeti-proxy:${TAG_VERSION}
+        ports:
             - "80:80"
+            - "443:443"
