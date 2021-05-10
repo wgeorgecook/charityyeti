@@ -35,6 +35,8 @@ type config struct {
 	MiddlewareToken    string `env:"MIDDLEWARE_TOKEN_ENDPOINT"`
 	MiddlewareHealth   string `env:"MIDDLEWARE_HEALTH"`
 	SendTweets         bool   `env:"SEND_TWEETS"`
+	BearerToken        string `env:"BEARER_TOKEN"`
+	WebhookID          string `env:"WEBHOOK_ID"`
 }
 
 // type to gather tweet data from an invocation of @CharityYeti
@@ -73,6 +75,7 @@ type charityYetiAggregation struct {
 }
 
 var srv *http.Server
+var httpClient *http.Client
 var twitterClient *twitter.Client
 var tweetStream *twitter.Stream
 var dmStream *twitter.Stream
@@ -117,7 +120,7 @@ func main() {
 	log.Info("Configuring Twitter twitterClient")
 	config := oauth1.NewConfig(cfg.ConsumerKey, cfg.ConsumerSecret)
 	token := oauth1.NewToken(cfg.AccessToken, cfg.AccessSecret)
-	httpClient := config.Client(oauth1.NoContext, token)
+	httpClient = config.Client(oauth1.NoContext, token)
 	twitterClient = twitter.NewClient(httpClient)
 
 	// check if we're going to send tweets
@@ -155,10 +158,6 @@ func main() {
 		log.Info("Stopping tweet stream")
 		tweetStream.Stop()
 		log.Info("Tweet tream stopped")
-		log.Info("Stopping DM stream")
-		dmStream.Stop()
-		log.Info("DM tream stopped")
-
 		// cancel the context
 		cancel()
 	}()

@@ -325,11 +325,11 @@ func replyToDM(userID, dmText string) error {
 	return nil
 }
 
-// processDM parses an incoming direct message from the dmQueue, pulls out the user who sent it, the ID of the
+// processDM parses an incoming direct message from the DM webhook, pulls out the user who sent it, the ID of the
 // originating tweet, and passes it to respondToInvocation to send to Twitter
 func processDM() {
 	confirmBlock := "Thanks for lettings us know you don't want us contacting you. If you change your mind, you can reply with START."
-	confirmUnblock := "*Excited Yeti Noises* We're so glad you want to use Charity Yeti again! You're good to go from here.If you change your mind, you can reply with STOP."
+	confirmUnblock := "*Excited Yeti Noises* We're so glad you want to use Charity Yeti again! You're good to go from here. If you change your mind, you can reply with STOP."
 	unknownMessage := "Charity Yeti is a work in progress and isn't too smart yet. If you want us to leave you alone, reply with STOP."
 	// loop forever to listen for incoming DMs
 	for {

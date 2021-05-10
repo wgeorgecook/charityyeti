@@ -14,7 +14,7 @@ func listen(client *twitter.Client) {
 	log.Infow("Connecting to Twitter")
 	_, _, err := client.Accounts.VerifyCredentials(verifyParams)
 	if err != nil {
-		log.Fatal("Could not authenticate to Twitter")
+		log.Fatalf("Could not authenticate to Twitter: %v", err)
 	}
 
 	// Demux allows us to use the twitter library handlers
@@ -29,13 +29,6 @@ func listen(client *twitter.Client) {
 		// send this tweet to a queue for processing
 		log.Infof("Sending incoming tweet (%v) to channel", tweet.IDStr)
 		tweetQueue <- tweet
-	}
-
-	// In this case, we're printing out the direct message text as it
-	// comes in and sending it off for processing on another channel
-	demux.DM = func(dm *twitter.DirectMessage) {
-		log.Infof("Sending incoming DM (%v) to channel", dm.Text)
-		dmQueue <- dm
 	}
 
 	// These params configure what we are filtering our string for.
@@ -53,21 +46,5 @@ func listen(client *twitter.Client) {
 	if err != nil {
 		log.Fatalf("Can't connect to tweet stream: %v", err)
 	}
-
-	// Run the tweet stream handler in its own goroutine
-	go demux.HandleChan(tweetStream.Messages)
-
-	// Run the DM stream handler in it's own gorouting
-	fireHoseParams := &twitter.StreamFirehoseParams{
-		StallWarnings: twitter.Bool(true),
-		Language:      []string{"en"},
-	}
-
-	log.Infow("Starting dm stream")
-	dmStream, err = client.Streams.Firehose(fireHoseParams)
-	if err != nil {
-		log.Fatalf("Can't connect to dm stream: %v", err)
-	}
-	go demux.HandleChan(dmStream.Messages)
 
 }

@@ -3,11 +3,12 @@ package main
 import (
 	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -29,6 +30,7 @@ func startServer() {
 	router.HandleFunc("/get/donated", getDonatedTweets)
 	router.HandleFunc("/get/donors", getDonors)
 	router.HandleFunc("/get/health", getHealth)
+	router.HandleFunc("/oauth2/callback", oauthCallback)
 	router.HandleFunc("/webhook/listen", webhookListener)
 
 	// create a new http server with a default timeout for incoming requests
@@ -56,6 +58,26 @@ func getHealth(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func oauthRequest(w http.ResponseWriter, r *http.Request) {
+	// redirect the user to Twitter and awaie callback
+	path := "https://api.twitter.com/oauth/request_token"
+	//Set parameters
+	values := url.Values{}
+	values.Set("url", "https://charityyeti.casadecook.com/webhook/listen")
+
+	//Make Oauth Post with parameters
+	resp, _ := httpClient.PostForm(path, values)
+	defer resp.Body.Close()
+	//Parse response and check response
+	body, _ := ioutil.ReadAll(resp.Body)
+	log.Infof("response: %v", string(body))
+	w.Write(body)
+}
+
+func oauthCallback(w http.ResponseWriter, r *http.Request) {
+	log.Info("incoming oauth2 callback")
+}
+
 // webhookListener receives POST requests from Twitter with the payloads we subscribe to
 // they will sometimes send a Challenge-Response Check via GET request, so we first
 // check for that before processing the request
@@ -69,11 +91,14 @@ func webhookListener(w http.ResponseWriter, r *http.Request) {
 		// make an HMAC SHA-256 hash using it and our client secret
 		hash := hmac.New(sha256.New, []byte(cfg.ConsumerSecret))
 
+		log.Infof("incoming crc_token: %v", token[0])
+		w.Header().Set("Content-Type", "application/json")
+
 		// write the incoming crc_token using the hash
 		hash.Write([]byte(token[0]))
 
 		// save the sha as a string we can return to Twitter
-		sha := hex.EncodeToString(hash.Sum(nil))
+		sha := base64.StdEncoding.EncodeToString(hash.Sum(nil))
 
 		// marshal our response token
 		response := CRCResponse{ResponseToken: fmt.Sprintf("sha256=%v", sha)}
