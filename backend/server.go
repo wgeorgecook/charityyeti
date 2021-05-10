@@ -66,7 +66,11 @@ func oauthRequest(w http.ResponseWriter, r *http.Request) {
 	values.Set("url", "https://charityyeti.casadecook.com/webhook/listen")
 
 	//Make Oauth Post with parameters
-	resp, _ := httpClient.PostForm(path, values)
+	resp, err := httpClient.PostForm(path, values)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("could not make Post for oauth request: %v", err), http.StatusBadRequest)
+		return
+	}
 	defer resp.Body.Close()
 	//Parse response and check response
 	body, _ := ioutil.ReadAll(resp.Body)
