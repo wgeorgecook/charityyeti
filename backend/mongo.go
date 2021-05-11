@@ -86,7 +86,7 @@ func existsInBlockList(userID int64) bool {
 	return true
 }
 
-// addBlockList takes a user ID from a twitter.User as twitter.User.ID (int64) and adds that
+// addBlockList takes a user ID from a anaconda.User as anaconda.User.ID (int64) and adds that
 // ID to our block list
 func addBlockList(userID int64) error {
 	log.Infof("Adding %v to our block list", userID)
@@ -111,7 +111,7 @@ func addBlockList(userID int64) error {
 	return nil
 }
 
-// removeBlockList takes a user ID from a twitter.User as twitter.User.ID (int64) and removes
+// removeBlockList takes a user ID from a anaconda.User as anaconda.User.ID (int64) and removes
 // that ID from our block list
 func removeBlockList(userID int64) error {
 	log.Infof("Removing %v from our block list", userID)
