@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -300,4 +301,50 @@ func successfulDonation(w http.ResponseWriter, r *http.Request) {
 	// not really necessary but I like closure
 	return
 
+}
+
+// initWebhooks will check and see if we've got a webhook registered with Twitter,
+// and makes sure that charityyeti is subscribed to that webhook
+func initWebhooks() error {
+	// first get the webhooks we already have registered
+	v := url.Values{}
+	v.Add("env_name", "dev")
+	webhooks, err := getWebhooks()
+	if err != nil {
+		log.Errorf("could not get registered webhooks: %v", err)
+		return err
+	}
+
+	webhookId := ""
+	if len(webhooks) != 0 {
+		// checks and makes sure we're listening at the correct domain
+		if !strings.Contains(webhooks[0].URL, cfg.WebhookCallbakURL) {
+			// we aren't registered to the current deployment, and since we can only have
+			// one webhook we need to delete the existing one...
+			deleteWebhook(webhooks[0].ID)
+		}
+
+		// if we are, there's an existing webhook
+		webhookId = webhooks[0].ID
+	}
+
+	if webhookId == "" {
+		// register a new one
+		log.Info("no current registered webhooks, creating a new one")
+		webhook, err := createWebhook()
+		if err != nil {
+			log.Errorf("could not register a new webhook: %v", err)
+			return err
+		}
+		webhookId = webhook.ID
+	}
+	// and then checks to see if we have charity yeti subscribed to it
+	err = subscribeToWebhook(webhookId)
+	if err != nil {
+		log.Errorf("could not subscribe CharityYeti to webhook: %v", err)
+		return err
+	}
+
+	log.Infof("Registered webhook: %v", webhookId)
+	return nil
 }

@@ -36,6 +36,9 @@ type config struct {
 	SendTweets         bool   `env:"SEND_TWEETS"`
 	BearerToken        string `env:"BEARER_TOKEN"`
 	WebhookID          string `env:"WEBHOOK_ID"`
+	WebhookCallbakURL  string `env:"WEBHOOK_CALLBACK_URL"`
+	Email              string `env:"BASIC_EMAIL"`
+	Password           string `env:"BASIC_PASSWORD"`
 }
 
 // type to gather tweet data from an invocation of @CharityYeti
@@ -111,6 +114,10 @@ func init() {
 	log.Infow("Connecting to Mongo")
 	mongoClient = initMongo(cfg.ConnectionURI)
 
+	// HTTP client
+	httpClient = http.DefaultClient
+	httpClient.Timeout = 10 * time.Second
+
 }
 
 func main() {
@@ -140,6 +147,11 @@ func main() {
 
 	// Starts the server that responds after donation
 	go startServer()
+
+	// make sure we're listening to webhooks and are subscribed to one
+	if err := initWebhooks(); err != nil {
+		log.Fatalf("could not start charity yeti webhooks: %v", err)
+	}
 
 	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
 	ch := make(chan os.Signal)
