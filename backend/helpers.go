@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/dghubble/go-twitter/twitter"
+	"github.com/ChimeraCoder/anaconda"
 	"go.uber.org/zap"
 )
 
@@ -24,20 +24,24 @@ func extractID(w http.ResponseWriter, r *http.Request) (string, error) {
 
 // getInReplyToTwitterUser is a helper function takes the immutable ID of a Twitter user (IE - the honorary on an invoked
 // tweet) and returns the full Twitter user details for that user
-func getInReplyToTwitterUser(twitterId int64) *twitter.User {
+func getInReplyToTwitterUser(twitterId int64) *anaconda.User {
 	// in the event of a retweet with comment where a user is invoking Charity Yeti, there will be no screenname so we
 	// should return early
 	if twitterId == 0 {
 		log.Error("No twitterId provided and cannot get honorary user details")
 		return nil
 	}
-	user, _, err := twitterClient.Users.Show(&twitter.UserShowParams{
-		UserID: twitterId,
-	})
 
+	users, err := twitterClient.GetUsersLookupByIds([]int64{twitterId}, nil)
 	if err != nil {
 		log.Errorf("cannot get honorary user details: %v", err)
+		return nil
 	}
 
-	return user
+	if len(users) == 0 {
+		log.Errorf("no users found")
+		return nil
+	}
+
+	return &users[0]
 }
