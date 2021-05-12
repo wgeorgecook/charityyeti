@@ -376,12 +376,20 @@ func initWebhooks() error {
 		webhookId = webhook.ID
 	}
 	// and then checks to see if we have charity yeti subscribed to it
-	err = subscribeToWebhook(webhookId)
+	subscribed, err := getSubscriptions()
 	if err != nil {
-		log.Errorf("could not subscribe CharityYeti to webhook: %v", err)
-		return err
+		log.Errorf("couldn't check subscriptions: %v", err)
+	}
+	if !subscribed {
+		// subscribe CharityYeti to this webhook
+		err = subscribeToWebhook(webhookId)
+		if err != nil {
+			log.Errorf("could not subscribe CharityYeti to webhook: %v", err)
+			return err
+		}
 	}
 
+	// all done!
 	log.Infof("Registered webhook: %v", webhookId)
 	return nil
 }

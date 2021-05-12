@@ -198,6 +198,43 @@ func createWebhook() (*anaconda.WebHookResp, error) {
 	return &webhook, nil
 }
 
+// getSubscriptions
+func getSubscriptions() (bool, error) {
+	// curl --request GET
+	// --url https://api.twitter.com/1.1/account_activity/all/:ENV_NAME/subscriptions.json
+	// --header 'authorization: OAuth oauth_consumer_key="CONSUMER_KEY", oauth_nonce="GENERATED",
+	// oauth_signature="GENERATED", oauth_signature_method="HMAC-SHA1", oauth_timestamp="GENERATED",
+	// oauth_token="SUBSCRIBING_USER'S_ACCESS_TOKEN", oauth_version="1.0"'
+	log.Info("getting subscriptions on webhook")
+	endpoint := fmt.Sprintf("https://api.twitter.com/1.1/account_activity/all/%v/subscriptions.json", cfg.EnvironmentName)
+	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
+	if err != nil {
+		log.Errorf("could not create request to create webhook endpoint: %v", err)
+		return false, err
+	}
+
+	req.Header.Add("Authorization", getOauth1AuthorizationHeader(http.MethodPost, endpoint, map[string]string{}))
+
+	// log.Infof("making this request: %+v", req)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.Errorf("could not make request to get webhook subscription endpoint: %v", err)
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		// user does not have a subscription
+		log.Info("user does not have a subscription")
+		return false, nil
+	}
+
+	// user does have a subscription
+	log.Info("user already has a subscription")
+	return true, nil
+
+}
+
 // subscribeToWebhook
 func subscribeToWebhook(webhookId string) error {
 	// curl --request POST
