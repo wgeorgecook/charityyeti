@@ -26,7 +26,7 @@ type config struct {
 	ConsumerSecret     string `env:"CONSUMER_SECRET"`
 	AccessToken        string `env:"ACCESS_TOKEN"`
 	AccessSecret       string `env:"ACCESS_SECRET"`
-	Port               string `env:"PORT" envDefault:":8080"`
+	Port               string `env:"PORT" envDefault:"8080"`
 	ConnectionURI      string `env:"MONGO_URI"`
 	Database           string `env:"DATABASE"`
 	Collection         string `env:"COLLECTION"`
