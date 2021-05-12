@@ -47,7 +47,6 @@ func getInReplyToTwitterUser(twitterId int64) *twitter.User {
 	user, _, err := twitterClient.Users.Show(&twitter.UserShowParams{
 		UserID: twitterId,
 	})
-
 	if err != nil {
 		log.Errorf("cannot get honorary user details: %v", err)
 	}

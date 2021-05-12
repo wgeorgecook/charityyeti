@@ -23,21 +23,30 @@ func processInvocation() {
 
 	// loop forever to listen for incoming tweets
 	for {
+		select {
 		// when a tweet gets received from the queue, start processing
-		incomingTweet := <-tweetQueue
+		case incomingTweet := <-tweetQueue:
+			// check and make sure this is specifically invoking us and not
+			// just replying or randomly @'ing us
+			if !strings.Contains(strings.ToLower(incomingTweet.TweetCreateEvents[0].Text), "hey @charityetidev") {
+				// this isn't a specific invokation so going to ignore it
+				log.Infof("this isn't an invocation so we are going to ignore it: %v", incomingTweet.TweetCreateEvents[0].Text)
+				break
+			}
 
-		honorary := getInReplyToTwitterUser(incomingTweet.InReplyToUserID)
+			honorary := getInReplyToTwitterUser(int64(incomingTweet.TweetCreateEvents[0].InReplyToUserID))
 
-		yeti := yetiInvokedData{
-			invoker:         incomingTweet.User,
-			honorary:        honorary,
-			invokerTweetID:  incomingTweet.ID,
-			originalTweetID: incomingTweet.InReplyToStatusID,
-		}
+			yeti := yetiInvokedData{
+				invoker:         &incomingTweet.TweetCreateEvents[0].User,
+				honorary:        honorary,
+				invokerTweetID:  incomingTweet.TweetCreateEvents[0].ID,
+				originalTweetID: incomingTweet.TweetCreateEvents[0].InReplyToStatusID,
+			}
 
-		err := respondToInvocation(yeti)
-		if err != nil {
-			log.Error(err)
+			err := respondToInvocation(yeti)
+			if err != nil {
+				log.Error(err)
+			}
 		}
 	}
 

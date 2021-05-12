@@ -43,7 +43,7 @@ type config struct {
 
 // type to gather tweet data from an invocation of @CharityYeti
 type yetiInvokedData struct {
-	invoker         *twitter.User
+	invoker         *User
 	honorary        *twitter.User
 	invokerTweetID  int64
 	originalTweetID int64
@@ -79,9 +79,8 @@ type charityYetiAggregation struct {
 var srv *http.Server
 var httpClient *http.Client
 var twitterClient *twitter.Client
-var tweetStream *twitter.Stream
-var tweetQueue chan *twitter.Tweet
-var dmQueue chan *DMWebhook
+var tweetQueue chan *IncomingWebhook
+var dmQueue chan *IncomingWebhook
 var retweetGoods bool
 var log *zap.SugaredLogger
 var cfg config
@@ -133,15 +132,11 @@ func main() {
 		log.Infow("No write access. This is a dry run.")
 	}
 
-	// tweetQueue is a channel that holds tweets we've heard while listening to the stream
-	tweetQueue = make(chan *twitter.Tweet)
+	// tweetQueue is a channel that holds tweets that come in on webhooks
+	tweetQueue = make(chan *IncomingWebhook)
 
-	// dmQueue is a channel that holds all the DMs we get while listening to incoming DMs
-	dmQueue = make(chan *DMWebhook)
-
-	// Opens the Twitter feed for listening and sending initial tweet response
-	// Must set writeable=true for write access
-	go listen(twitterClient)
+	// dmQueue is a channel that holds all the DMs we get on webhooks
+	dmQueue = make(chan *IncomingWebhook)
 
 	// starts a worker who processes tweets once Charity Yeti is invoked
 	go processInvocation()
@@ -164,14 +159,8 @@ func main() {
 
 	// set up the context so we can cancel any straggler connections
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer func() {
-		// Stop the streams
-		log.Info("Stopping tweet stream")
-		tweetStream.Stop()
-		log.Info("Tweet tream stopped")
-		// cancel the context
-		cancel()
-	}()
+	defer cancel()
+
 	// Stop the HTTP server
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Errorf("could not gracefully shutdown server: %v", err)
