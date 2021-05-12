@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/dghubble/go-twitter/twitter"
 	oauth1 "github.com/klaidas/go-oauth1"
 
 	"github.com/ChimeraCoder/anaconda"
@@ -36,26 +37,22 @@ func extractID(w http.ResponseWriter, r *http.Request) (string, error) {
 
 // getInReplyToTwitterUser is a helper function takes the immutable ID of a Twitter user (IE - the honorary on an invoked
 // tweet) and returns the full Twitter user details for that user
-func getInReplyToTwitterUser(twitterId int64) *anaconda.User {
+func getInReplyToTwitterUser(twitterId int64) *twitter.User {
 	// in the event of a retweet with comment where a user is invoking Charity Yeti, there will be no screenname so we
 	// should return early
 	if twitterId == 0 {
 		log.Error("No twitterId provided and cannot get honorary user details")
 		return nil
 	}
+	user, _, err := twitterClient.Users.Show(&twitter.UserShowParams{
+		UserID: twitterId,
+	})
 
-	users, err := twitterClient.GetUsersLookupByIds([]int64{twitterId}, nil)
 	if err != nil {
 		log.Errorf("cannot get honorary user details: %v", err)
-		return nil
 	}
 
-	if len(users) == 0 {
-		log.Errorf("no users found")
-		return nil
-	}
-
-	return &users[0]
+	return user
 }
 
 // getBearerToken
@@ -199,6 +196,43 @@ func createWebhook() (*anaconda.WebHookResp, error) {
 	}
 
 	return &webhook, nil
+}
+
+// getSubscriptions
+func getSubscriptions() (bool, error) {
+	// curl --request GET
+	// --url https://api.twitter.com/1.1/account_activity/all/:ENV_NAME/subscriptions.json
+	// --header 'authorization: OAuth oauth_consumer_key="CONSUMER_KEY", oauth_nonce="GENERATED",
+	// oauth_signature="GENERATED", oauth_signature_method="HMAC-SHA1", oauth_timestamp="GENERATED",
+	// oauth_token="SUBSCRIBING_USER'S_ACCESS_TOKEN", oauth_version="1.0"'
+	log.Info("getting subscriptions on webhook")
+	endpoint := fmt.Sprintf("https://api.twitter.com/1.1/account_activity/all/%v/subscriptions.json", cfg.EnvironmentName)
+	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
+	if err != nil {
+		log.Errorf("could not create request to create webhook endpoint: %v", err)
+		return false, err
+	}
+
+	req.Header.Add("Authorization", getOauth1AuthorizationHeader(http.MethodPost, endpoint, map[string]string{}))
+
+	// log.Infof("making this request: %+v", req)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.Errorf("could not make request to get webhook subscription endpoint: %v", err)
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		// user does not have a subscription
+		log.Info("user does not have a subscription")
+		return false, nil
+	}
+
+	// user does have a subscription
+	log.Info("user already has a subscription")
+	return true, nil
+
 }
 
 // subscribeToWebhook
