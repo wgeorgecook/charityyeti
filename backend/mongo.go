@@ -68,7 +68,7 @@ func updateDocument(u charityYetiData) (*charityYetiData, error) {
 
 // existsInBlockList takes in a user ID and checks the block list, returning whether
 // or not we have that user in the block list
-func existsInBlockList(userID int64) bool {
+func existsInBlockList(userID string) bool {
 	log.Infof("Searching for %v in block list", userID)
 	// find the record in Mongo
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -88,7 +88,7 @@ func existsInBlockList(userID int64) bool {
 
 // addBlockList takes a user ID from a anaconda.User as anaconda.User.ID (int64) and adds that
 // ID to our block list
-func addBlockList(userID int64) error {
+func addBlockList(userID string) error {
 	log.Infof("Adding %v to our block list", userID)
 	alreadyBlocked := existsInBlockList(userID)
 	if alreadyBlocked {
@@ -113,7 +113,7 @@ func addBlockList(userID int64) error {
 
 // removeBlockList takes a user ID from a anaconda.User as anaconda.User.ID (int64) and removes
 // that ID from our block list
-func removeBlockList(userID int64) error {
+func removeBlockList(userID string) error {
 	log.Infof("Removing %v from our block list", userID)
 	alreadyBlocked := existsInBlockList(userID)
 	if !alreadyBlocked {

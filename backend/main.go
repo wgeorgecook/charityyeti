@@ -35,10 +35,8 @@ type config struct {
 	MiddlewareHealth   string `env:"MIDDLEWARE_HEALTH"`
 	SendTweets         bool   `env:"SEND_TWEETS"`
 	BearerToken        string `env:"BEARER_TOKEN"`
-	WebhookID          string `env:"WEBHOOK_ID"`
 	WebhookCallbakURL  string `env:"WEBHOOK_CALLBACK_URL"`
-	Email              string `env:"BASIC_EMAIL"`
-	Password           string `env:"BASIC_PASSWORD"`
+	EnvironmentName    string `env:"ENVIRONMENT_NAME"`
 }
 
 // type to gather tweet data from an invocation of @CharityYeti
@@ -81,7 +79,7 @@ var httpClient *http.Client
 var twitterClient *anaconda.TwitterApi
 var tweetStream *anaconda.Stream
 var tweetQueue chan *anaconda.Tweet
-var dmQueue chan *anaconda.DirectMessage
+var dmQueue chan *DMWebhook
 var retweetGoods bool
 var log *zap.SugaredLogger
 var cfg config
@@ -136,7 +134,7 @@ func main() {
 	tweetQueue = make(chan *anaconda.Tweet)
 
 	// dmQueue is a channel that holds all the DMs we get while listening to incoming DMs
-	dmQueue = make(chan *anaconda.DirectMessage)
+	dmQueue = make(chan *DMWebhook)
 
 	// Opens the Twitter feed for listening and sending initial tweet response
 	// Must set writeable=true for write access
@@ -152,6 +150,9 @@ func main() {
 	if err := initWebhooks(); err != nil {
 		log.Fatalf("could not start charity yeti webhooks: %v", err)
 	}
+
+	// listen for those sweet DMs
+	go processDM()
 
 	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
 	ch := make(chan os.Signal)

@@ -19,6 +19,30 @@ type CRCResponse struct {
 	ResponseToken string `json:"response_token"`
 }
 
+type DMWebhook struct {
+	ForUserID           string `json:"for_user_id"`
+	DirectMessageEvents []struct {
+		Type             string `json:"type"`
+		ID               string `json:"id"`
+		CreatedTimestamp string `json:"created_timestamp"`
+		MessageCreate    struct {
+			Target struct {
+				RecipientID string `json:"recipient_id"`
+			} `json:"target"`
+			SenderID    string `json:"sender_id"`
+			MessageData struct {
+				Text     string `json:"text"`
+				Entities struct {
+					Hashtags     []interface{} `json:"hashtags"`
+					Symbols      []interface{} `json:"symbols"`
+					UserMentions []interface{} `json:"user_mentions"`
+					Urls         []interface{} `json:"urls"`
+				} `json:"entities"`
+			} `json:"message_data"`
+		} `json:"message_create"`
+	} `json:"direct_message_events"`
+}
+
 // startServer spins up an http listener for this service on the
 // port and path specified
 func startServer() {
@@ -132,7 +156,20 @@ func webhookListener(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// print it out for debug
-	log.Debugf("incoming webhook payload: %v", string(reqBytes))
+	// log.Debugf("incoming webhook payload: %v", string(reqBytes))
+
+	// unmarshall it
+	var dm DMWebhook
+	if err := json.Unmarshal(reqBytes, &dm); err != nil {
+		// this probably is not a DM event so we will just log and ignore it
+		log.Debugf("could not unmarshal webhook: %v", err)
+		return
+	}
+
+	log.Infof("sending this to the DM queue: %+v", dm)
+	// drop on the queue for processing
+	dmQueue <- &dm
+
 	return
 }
 

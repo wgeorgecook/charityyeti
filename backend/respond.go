@@ -88,7 +88,7 @@ func generateResponseTweetText(link string) string {
 // Charity Yeti website. The donation link includes an id for a Mongo document for the front end to retrieve and add
 // on the donation value after a successful donation.
 func respondToInvocation(yeti yetiInvokedData) error {
-	if existsInBlockList(yeti.invoker.Id) {
+	if existsInBlockList(fmt.Sprintf("%v", yeti.invoker.Id)) {
 		// this user asked us not to contact them so we'll skip over
 		return errors.New(fmt.Sprintf("user %v (%v) asked us not to contact them", yeti.invoker.ScreenName, yeti.invoker.Id))
 	}
@@ -285,10 +285,15 @@ func respondToDonation(tweet successfulDonationData) error {
 
 // replyToDM DMs the user who asked us to stop/start contacting them that we will do so, or
 // let them know that we can't quite understand what they mean
-func replyToDM(userId int64, dmText string) error {
+func replyToDM(userId string, dmText string) error {
 	// send a DM
-	_, err := twitterClient.PostDMToUserId(dmText, userId)
-
+	// convert the string userId to int64
+	user, err := strconv.Atoi(userId)
+	if err != nil {
+		log.Errorf("Could not send a DM to user %v: %v", userId, err)
+		return err
+	}
+	_, err = twitterClient.PostDMToUserId(dmText, int64(user))
 	if err != nil {
 		log.Errorf("Could not send a DM to user %v: %v", userId, err)
 		return err
@@ -299,54 +304,61 @@ func replyToDM(userId int64, dmText string) error {
 // processDM parses an incoming direct message from the DM webhook, pulls out the user who sent it, the ID of the
 // originating tweet, and passes it to respondToInvocation to send to Twitter
 func processDM() {
-	confirmBlock := "Thanks for lettings us know you don't want us contacting you. If you change your mind, you can reply with START."
-	confirmUnblock := "*Excited Yeti Noises* We're so glad you want to use Charity Yeti again! You're good to go from here. If you change your mind, you can reply with STOP."
-	unknownMessage := "Charity Yeti is a work in progress and isn't too smart yet. If you want us to leave you alone, reply with STOP."
 	// loop forever to listen for incoming DMs
 	for {
+		select {
 		// when a DM gets received from the queue, start processing
-		incomingMessage := <-dmQueue
-		log.Infof("Incoming direct message from %v (%v)", incomingMessage.SenderScreenName, incomingMessage.SenderId)
-		action := "default"
-		check := incomingMessage.Text
-		if strings.Contains(strings.ToLower(check), "stop") {
-			action = "stop"
-		}
-		if strings.Contains(strings.ToLower(check), "start") {
-			action = "start"
-		}
+		case incomingMessage := <-dmQueue:
+			log.Info("incoming message on DM Queue")
+			confirmBlock := "Thanks for lettings us know you don't want us contacting you. If you change your mind, you can reply with START."
+			confirmUnblock := "*Excited Yeti Noises* We're so glad you want to use Charity Yeti again! You're good to go from here. If you change your mind, you can reply with STOP."
+			unknownMessage := "Charity Yeti is a work in progress and isn't too smart yet. If you want us to leave you alone, reply with STOP."
+			if len(incomingMessage.DirectMessageEvents) == 0 {
+				log.Info("no events on webhook")
+				break
+			}
+			senderId := incomingMessage.DirectMessageEvents[0].MessageCreate.SenderID
+			log.Infof("message from %v", senderId)
+			action := "default"
+			check := incomingMessage.DirectMessageEvents[0].MessageCreate.MessageData.Text
+			if strings.Contains(strings.ToLower(check), "stop") {
+				action = "stop"
+			}
+			if strings.Contains(strings.ToLower(check), "start") {
+				action = "start"
+			}
 
-		switch action {
-		case "stop":
-			// add this user to our block list so we don't contact them again
-			log.Info("This user wants us to stop contacting them")
-			// let the user know that we won't contact them again
-			if err := replyToDM(incomingMessage.Sender.Id, confirmBlock); err != nil {
-				log.Errorf("Could not DM user %v affirming no contact: %v", incomingMessage.Sender.Id, err)
-			}
-			// process the add to block list
-			if err := addBlockList(incomingMessage.Sender.Id); err != nil {
-				log.Errorf("Could not add this user to the block list. Manually add user %v to block list: %v", incomingMessage.Sender.Id, err)
-			}
-		case "start":
-			// user was previously removed but is fine with us contacting them again
-			log.Info("This user is allowing us to contact them again")
-			// let the user know that they can use Charity Yeti again
-			if err := replyToDM(incomingMessage.Sender.Id, confirmUnblock); err != nil {
-				log.Errorf("Could not DM user %v affirming consent to contact: %v", incomingMessage.Sender.Id, err)
-			}
-			// remove this user from the block list
-			if err := removeBlockList(incomingMessage.SenderId); err != nil {
-				log.Errorf("Could not remove this user from the block list. Manually remove user %v from block list: %v", incomingMessage.Sender.Id, err)
-			}
-		default:
-			// we don't know what this user wants
-			log.Info("Received a DM without a keyword")
-			// respond saying we aren't quite that clever (yet!)
-			if err := replyToDM(incomingMessage.Sender.Id, unknownMessage); err != nil {
-				log.Errorf("Could not DM user %v with ambiguous message: %v", incomingMessage.Sender.Id, err)
+			switch action {
+			case "stop":
+				// add this user to our block list so we don't contact them again
+				log.Info("This user wants us to stop contacting them")
+				// let the user know that we won't contact them again
+				if err := replyToDM(senderId, confirmBlock); err != nil {
+					log.Errorf("Could not DM user %v affirming no contact: %v", senderId, err)
+				}
+				// process the add to block list
+				if err := addBlockList(senderId); err != nil {
+					log.Errorf("Could not add this user to the block list. Manually add user %v to block list: %v", senderId, err)
+				}
+			case "start":
+				// user was previously removed but is fine with us contacting them again
+				log.Info("This user is allowing us to contact them again")
+				// let the user know that they can use Charity Yeti again
+				if err := replyToDM(senderId, confirmUnblock); err != nil {
+					log.Errorf("Could not DM user %v affirming consent to contact: %v", senderId, err)
+				}
+				// remove this user from the block list
+				if err := removeBlockList(senderId); err != nil {
+					log.Errorf("Could not remove this user from the block list. Manually remove user %v from block list: %v", senderId, err)
+				}
+			default:
+				// we don't know what this user wants
+				log.Info("Received a DM without a keyword")
+				// respond saying we aren't quite that clever (yet!)
+				if err := replyToDM(senderId, unknownMessage); err != nil {
+					log.Errorf("Could not DM user %v with ambiguous message: %v", senderId, err)
+				}
 			}
 		}
 	}
-
 }

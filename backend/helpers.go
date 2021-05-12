@@ -130,7 +130,7 @@ func getWebhooks() ([]anaconda.WebHookResp, error) {
 	// --header 'authorization: Bearer TOKEN'
 	log.Info("getting webhooks")
 	var webhooks []anaconda.WebHookResp
-	endpoint := "https://api.twitter.com/1.1/account_activity/all/dev/webhooks.json"
+	endpoint := fmt.Sprintf("https://api.twitter.com/1.1/account_activity/all/%v/webhooks.json", cfg.EnvironmentName)
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
 		log.Errorf("could not create request to webhook endpoint: %v", err)
@@ -144,7 +144,7 @@ func getWebhooks() ([]anaconda.WebHookResp, error) {
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", bearer))
 
-	log.Infof("making this request: %+v", req)
+	// log.Infof("making this request: %+v", req)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Errorf("could not make request to webhook endpoint: %v", err)
@@ -173,7 +173,7 @@ func createWebhook() (*anaconda.WebHookResp, error) {
 	log.Info("creating webhook")
 	var webhook anaconda.WebHookResp
 	rawEndpoint := "https://api.twitter.com/1.1/account_activity/all/dev/webhooks.json"
-	endpoint := fmt.Sprintf("https://api.twitter.com/1.1/account_activity/all/dev/webhooks.json?url=%v", url.QueryEscape(cfg.WebhookCallbakURL))
+	endpoint := fmt.Sprintf("https://api.twitter.com/1.1/account_activity/all/%v/webhooks.json?url=%v", cfg.EnvironmentName, url.QueryEscape(cfg.WebhookCallbakURL))
 	params := map[string]string{"url": cfg.WebhookCallbakURL}
 	req, err := http.NewRequest(http.MethodPost, endpoint, nil)
 	if err != nil {
@@ -183,7 +183,7 @@ func createWebhook() (*anaconda.WebHookResp, error) {
 
 	req.Header.Add("Authorization", getOauth1AuthorizationHeader(http.MethodPost, rawEndpoint, params))
 
-	log.Infof("making this request: %+v", req)
+	// log.Infof("making this request: %+v", req)
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		log.Errorf("could not make request to create webhook endpoint: %v", err)
@@ -209,7 +209,7 @@ func subscribeToWebhook(webhookId string) error {
 	// oauth_signature="GENERATED", oauth_signature_method="HMAC-SHA1", oauth_timestamp="GENERATED",
 	// oauth_token="SUBSCRIBING_USER'S_ACCESS_TOKEN", oauth_version="1.0"'
 	log.Info("start subscribe to webhook")
-	endpoint := "https://api.twitter.com/1.1/account_activity/all/dev/subscriptions.json"
+	endpoint := fmt.Sprintf("https://api.twitter.com/1.1/account_activity/all/%v/subscriptions.json", cfg.EnvironmentName)
 	req, err := http.NewRequest(http.MethodPost, endpoint, nil)
 	if err != nil {
 		log.Errorf("could not create request to webhook endpoint: %v", err)
@@ -218,7 +218,7 @@ func subscribeToWebhook(webhookId string) error {
 
 	req.Header.Add("Authorization", getOauth1AuthorizationHeader(http.MethodPost, endpoint, map[string]string{}))
 
-	log.Infof("making this request: %+v", req)
+	// log.Infof("making this request: %+v", req)
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		log.Errorf("could not make request to webhook endpoint: %v", err)
@@ -229,8 +229,8 @@ func subscribeToWebhook(webhookId string) error {
 	body, _ := ioutil.ReadAll(resp.Body)
 	log.Infof("webhook response from Twitter: %v", string(body))
 
-	if resp.StatusCode != http.StatusNoContent {
-		log.Errorf("expected 204 but received %v", resp.StatusCode)
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusConflict {
+		log.Errorf("expected 204 or 409 but received %v", resp.StatusCode)
 		return errors.New("unacceptable response from Twitter")
 	}
 	return nil
@@ -255,7 +255,7 @@ func deleteWebhook(webhookId string) ([]anaconda.WebHookResp, error) {
 
 	req.Header.Add("Authorization", getOauth1AuthorizationHeader(http.MethodDelete, endpoint, map[string]string{}))
 
-	log.Infof("making this request: %+v", req)
+	// log.Infof("making this request: %+v", req)
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		log.Errorf("could not make request to webhook endpoint: %v", err)
