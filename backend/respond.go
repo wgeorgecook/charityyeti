@@ -5,14 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"net/url"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/dghubble/go-twitter/twitter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+const BAD_ROBOT = "twitter: 226 This request looks like it might be automated. To protect our users from spam and other malicious activity, we can't complete this action right now. Please try again later."
 
 // processInvocation parses an incoming tweet from the tweetQueue, pulls out the user who sent it, the ID of the
 // originating tweet, and passes it to respondToInvocation to send to Twitter
@@ -26,9 +29,9 @@ func processInvocation() {
 		honorary := getInReplyToTwitterUser(incomingTweet.InReplyToUserID)
 
 		yeti := yetiInvokedData{
-			invoker:         &incomingTweet.User,
+			invoker:         incomingTweet.User,
 			honorary:        honorary,
-			invokerTweetID:  incomingTweet.Id,
+			invokerTweetID:  incomingTweet.ID,
 			originalTweetID: incomingTweet.InReplyToStatusID,
 		}
 
@@ -88,9 +91,9 @@ func generateResponseTweetText(link string) string {
 // Charity Yeti website. The donation link includes an id for a Mongo document for the front end to retrieve and add
 // on the donation value after a successful donation.
 func respondToInvocation(yeti yetiInvokedData) error {
-	if existsInBlockList(fmt.Sprintf("%v", yeti.invoker.Id)) {
+	if existsInBlockList(strconv.Itoa(int(yeti.invoker.ID))) {
 		// this user asked us not to contact them so we'll skip over
-		return errors.New(fmt.Sprintf("user %v (%v) asked us not to contact them", yeti.invoker.ScreenName, yeti.invoker.Id))
+		return errors.New(fmt.Sprintf("user %v (%v) asked us not to contact them", yeti.invoker.ScreenName, yeti.invoker.ID))
 	}
 	if yeti.honorary.ScreenName != "" {
 		dataID := primitive.NewObjectID()
@@ -116,24 +119,36 @@ func respondToInvocation(yeti yetiInvokedData) error {
 				log.Errorf(fmt.Sprintf("could not create Mongo document: %v", err))
 			}
 
-			// send the tweet/dm
+			// send the tweet
 			log.Infow("Actually sending this!")
 
 			// send a DM
-			_, err = twitterClient.PostDMToUserId(tweetText, yeti.invoker.Id)
+			_, _, err = twitterClient.DirectMessages.EventsNew(&twitter.DirectMessageEventsNewParams{
+				Event: &twitter.DirectMessageEvent{
+					Type: "message_create",
+					Message: &twitter.DirectMessageEventMessage{
+						Target: &twitter.DirectMessageTarget{
+							RecipientID: yeti.invoker.IDStr,
+						},
+						Data: &twitter.DirectMessageData{
+							Text: tweetText,
+						},
+					},
+				},
+			})
+
 			if err != nil {
 				log.Errorf("Could not send a DM: %v", err)
 				// if we can't send a DM (like they have DMs off or something), we fall back on a good old fashioned tweet reply
-				params := url.Values{}
-				params.Add("in_reply_to_status_id", strconv.Itoa(int(yeti.invokerTweetID)))
-				responseTweet, err := twitterClient.PostTweet(tweetText, params)
+				params := twitter.StatusUpdateParams{InReplyToStatusID: yeti.invokerTweetID}
+				responseTweet, _, err := twitterClient.Statuses.Update(tweetText, &params)
 				if err != nil {
 					return err
 				}
 
 				// now that we have a response tweet, we need to save it's ID back to the db so we can reply to this later
 				update := bson.M{
-					"$set": bson.M{"invokerResponseTweetID": &responseTweet.Id},
+					"$set": bson.M{"invokerResponseTweetID": &responseTweet.ID},
 				}
 
 				filter := bson.M{"_id": dataID}
@@ -157,7 +172,6 @@ func respondToInvocation(yeti yetiInvokedData) error {
 	to attribute is the only mechanism we presently have to detect and track *who* the invoker wants to credit their
 	donation for. There may be other attributes (I haven't looked into what data we can get from a retweeted tweet,
 	but it is probably similar), but we should decide if we want to interact with both replies and retweeted tweets.
-
 	See issue #4 for discussion.
 	*/
 	return errors.New("no honorary to respond to")
@@ -254,48 +268,74 @@ func respondToDonation(tweet successfulDonationData) error {
 	log.Debugf(fmt.Sprintf("Tweet to send: %+v", tweetText))
 	log.Debugf(fmt.Sprintf("Responding to: %v", tweet.invokerTweetID))
 
-	var params = url.Values{}
+	var params twitter.StatusUpdateParams
 	if tweet.invokerResponseTweetID != 0 {
 		// We couldn't DM this person, so we need to respond on our tweet with the donation link
-		params.Add("in_reply_to_status_id", strconv.Itoa(int(tweet.invokerResponseTweetID)))
+		params = twitter.StatusUpdateParams{
+			InReplyToStatusID: tweet.invokerResponseTweetID,
+		}
 	} else {
 		// This was from a DM, so we need to respond on the invoker's tweet
-		params.Add("in_reply_to_status_id", strconv.Itoa(int(tweet.invokerTweetID)))
+		params = twitter.StatusUpdateParams{
+			InReplyToStatusID: tweet.invokerTweetID,
+		}
 	}
 
 	if cfg.SendTweets {
 		log.Infow("Actually sending this!")
-		_, err := twitterClient.PostTweet(tweetText, params)
+		_, _, err := twitterClient.Statuses.Update(tweetText, &params)
+
 		if err != nil {
 			return err
 		}
 
-		// TODO: this needs implementing in Anaconda
-		// if retweetGoods {
-		// 	log.Infow("We're retweeting the invoked tweet. We might break twitter TOS for this.")
-		// 	rtParams := &twitter.StatusRetweetParams{ID: tweet.originalTweetID}
-		// 	_, _, err := twitterClient.Statuses.Retweet(tweet.originalTweetID, rtParams)
-		// 	if err != nil {
-		// 		log.Errorf("Could not retweet: %v", err)
-		// 	}
-		// }
+		// TODO: this needs testing
+		if retweetGoods {
+			log.Infow("We're retweeting the invoked tweet. We might break twitter TOS for this.")
+			rtParams := &twitter.StatusRetweetParams{ID: tweet.originalTweetID}
+			_, _, err := twitterClient.Statuses.Retweet(tweet.originalTweetID, rtParams)
+			if err != nil {
+				log.Errorf("Could not retweet: %v", err)
+			}
+		}
 	}
 	return nil
 }
 
 // replyToDM DMs the user who asked us to stop/start contacting them that we will do so, or
 // let them know that we can't quite understand what they mean
-func replyToDM(userId string, dmText string) error {
+func replyToDM(userID, dmText string) error {
 	// send a DM
-	// convert the string userId to int64
-	user, err := strconv.Atoi(userId)
+	_, resp, err := twitterClient.DirectMessages.EventsNew(&twitter.DirectMessageEventsNewParams{
+		Event: &twitter.DirectMessageEvent{
+			Type: "message_create",
+			Message: &twitter.DirectMessageEventMessage{
+				Target: &twitter.DirectMessageTarget{
+					RecipientID: userID,
+				},
+				Data: &twitter.DirectMessageData{
+					Text: dmText,
+				},
+			},
+		},
+	})
+
 	if err != nil {
-		log.Errorf("Could not send a DM to user %v: %v", userId, err)
-		return err
-	}
-	_, err = twitterClient.PostDMToUserId(dmText, int64(user))
-	if err != nil {
-		log.Errorf("Could not send a DM to user %v: %v", userId, err)
+		if err.Error() == BAD_ROBOT || resp.StatusCode == http.StatusTooManyRequests {
+			log.Error("twitter is limiting our ability to send messages, we need to take a break")
+			// there's a x-rate-limit-reset header on the response that tells us how long
+			// until rates are reset so we wait that long
+			waitUntilString := resp.Header.Get("x-rate-limit-reset")
+			// try and marshal the wait-until into an int
+			waitUntil, err := strconv.Atoi(waitUntilString)
+			if err != nil {
+				log.Info("couldn't get a time until the rates are reset")
+				waitUntil = 15 // so we're going to wait 15 minutes, the longest time before time resets
+			}
+			time.Sleep(time.Duration(waitUntil) * time.Minute)
+			return err
+		}
+		log.Errorf("Could not send a DM to user %v: %v", userID, err)
 		return err
 	}
 	return nil
@@ -319,6 +359,11 @@ func processDM() {
 			}
 			senderId := incomingMessage.DirectMessageEvents[0].MessageCreate.SenderID
 			log.Infof("message from %v", senderId)
+			if senderId == cfg.CharityYetiId {
+				// this is a message _we_ generated
+				log.Info("This is a message _from_ Charity Yeti, returning")
+				break
+			}
 			action := "default"
 			check := incomingMessage.DirectMessageEvents[0].MessageCreate.MessageData.Text
 			if strings.Contains(strings.ToLower(check), "stop") {
@@ -354,9 +399,15 @@ func processDM() {
 			default:
 				// we don't know what this user wants
 				log.Info("Received a DM without a keyword")
-				// respond saying we aren't quite that clever (yet!)
-				if err := replyToDM(senderId, unknownMessage); err != nil {
-					log.Errorf("Could not DM user %v with ambiguous message: %v", senderId, err)
+				// first check and make sure we aren't contacting them if they don't want us to
+				if existsInBlockList(senderId) {
+					// they don't want us contacting them
+					log.Info("user is in block list and doesn't want us to contact them")
+				} else {
+					// respond saying we aren't quite that clever (yet!)
+					if err := replyToDM(senderId, unknownMessage); err != nil {
+						log.Errorf("Could not DM user %v with ambiguous message: %v", senderId, err)
+					}
 				}
 			}
 		}

@@ -9,7 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ChimeraCoder/anaconda"
+	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/oauth1"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -37,12 +38,13 @@ type config struct {
 	BearerToken        string `env:"BEARER_TOKEN"`
 	WebhookCallbakURL  string `env:"WEBHOOK_CALLBACK_URL"`
 	EnvironmentName    string `env:"ENVIRONMENT_NAME"`
+	CharityYetiId      string `env:"CHARITY_YETI_ID"`
 }
 
 // type to gather tweet data from an invocation of @CharityYeti
 type yetiInvokedData struct {
-	invoker         *anaconda.User
-	honorary        *anaconda.User
+	invoker         *twitter.User
+	honorary        *twitter.User
 	invokerTweetID  int64
 	originalTweetID int64
 }
@@ -59,14 +61,14 @@ type successfulDonationData struct {
 
 // data we keep in Mongo
 type charityYetiData struct {
-	ID                     string        `json:"_id" bson:"_id"`
-	OriginalTweetID        int64         `json:"originalTweetID" bson:"originalTweetID"`
-	InvokerTweetID         int64         `json:"invokerTweetID" bson:"invokerTweetID"`
-	Invoker                anaconda.User `json:"invoker" bson:"invoker"`
-	Honorary               anaconda.User `json:"honorary" bson:"honorary"`
-	DonationValue          float32       `json:"donationValue" bson:"donationValue"`
-	DonationID             string        `json:"donationID" bson:"donationID"`
-	InvokerResponseTweetID int64         `json:"invokerResponseTweetID" bson:"invokerResponseTweetID"`
+	ID                     string       `json:"_id" bson:"_id"`
+	OriginalTweetID        int64        `json:"originalTweetID" bson:"originalTweetID"`
+	InvokerTweetID         int64        `json:"invokerTweetID" bson:"invokerTweetID"`
+	Invoker                twitter.User `json:"invoker" bson:"invoker"`
+	Honorary               twitter.User `json:"honorary" bson:"honorary"`
+	DonationValue          float32      `json:"donationValue" bson:"donationValue"`
+	DonationID             string       `json:"donationID" bson:"donationID"`
+	InvokerResponseTweetID int64        `json:"invokerResponseTweetID" bson:"invokerResponseTweetID"`
 }
 
 // aggregated Mongo data
@@ -76,9 +78,9 @@ type charityYetiAggregation struct {
 
 var srv *http.Server
 var httpClient *http.Client
-var twitterClient *anaconda.TwitterApi
-var tweetStream *anaconda.Stream
-var tweetQueue chan *anaconda.Tweet
+var twitterClient *twitter.Client
+var tweetStream *twitter.Stream
+var tweetQueue chan *twitter.Tweet
 var dmQueue chan *DMWebhook
 var retweetGoods bool
 var log *zap.SugaredLogger
@@ -113,15 +115,16 @@ func init() {
 	mongoClient = initMongo(cfg.ConnectionURI)
 
 	// HTTP client
-	httpClient = http.DefaultClient
-	httpClient.Timeout = 10 * time.Second
+	oauthConfig := oauth1.NewConfig(cfg.ConsumerKey, cfg.ConsumerSecret)
+	token := oauth1.NewToken(cfg.AccessToken, cfg.AccessSecret)
+	httpClient = oauthConfig.Client(oauth1.NoContext, token)
 
 }
 
 func main() {
 	// Configure global Twitter twitterClient
 	log.Info("Configuring Twitter twitterClient")
-	twitterClient = anaconda.NewTwitterApiWithCredentials(cfg.AccessToken, cfg.AccessSecret, cfg.ConsumerKey, cfg.ConsumerSecret)
+	twitterClient = twitter.NewClient(httpClient)
 
 	// check if we're going to send tweets
 	if cfg.SendTweets {
@@ -131,7 +134,7 @@ func main() {
 	}
 
 	// tweetQueue is a channel that holds tweets we've heard while listening to the stream
-	tweetQueue = make(chan *anaconda.Tweet)
+	tweetQueue = make(chan *twitter.Tweet)
 
 	// dmQueue is a channel that holds all the DMs we get while listening to incoming DMs
 	dmQueue = make(chan *DMWebhook)

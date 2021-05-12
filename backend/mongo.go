@@ -11,6 +11,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type blockedUser struct {
+	DocumentID string `json:"_id,omitempty" bson:"_id,omitempty"`
+	UserId     string `json:"user_id,omitempty" bson:"user_id,omitempty"`
+}
+
 func initMongo(connectionURI string) *mongo.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -77,11 +82,18 @@ func existsInBlockList(userID string) bool {
 		"user_id": userID,
 	}
 	collection := mongoClient.Database(cfg.Database).Collection(cfg.BlockList)
-	result := collection.FindOne(ctx, filter)
-	if result == nil {
-		log.Debug("user is not in the block list")
-		return false
+	var foundUser blockedUser
+	if err := collection.FindOne(ctx, filter).Decode(&foundUser); err != nil {
+		if err == mongo.ErrNoDocuments {
+			// user is not in the blocklist
+			log.Debug("user is not in the block list")
+			return false
+		}
+		log.Errorf("error checking for user in block list: %v", err)
+		// return true to be cautious
+		return true
 	}
+	log.Debugf("found user: %+v", foundUser)
 	log.Debug("user is in the block list")
 	return true
 }
