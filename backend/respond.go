@@ -37,7 +37,7 @@ func processInvocation() {
 			honorary := getInReplyToTwitterUser(int64(incomingTweet.TweetCreateEvents[0].InReplyToUserID))
 
 			yeti := yetiInvokedData{
-				invoker:         &incomingTweet.TweetCreateEvents[0].User,
+				invoker:         incomingTweet.TweetCreateEvents[0].User,
 				honorary:        honorary,
 				invokerTweetID:  incomingTweet.TweetCreateEvents[0].ID,
 				originalTweetID: incomingTweet.TweetCreateEvents[0].InReplyToStatusID,
@@ -137,7 +137,7 @@ func respondToInvocation(yeti yetiInvokedData) error {
 					Type: "message_create",
 					Message: &twitter.DirectMessageEventMessage{
 						Target: &twitter.DirectMessageTarget{
-							RecipientID: yeti.invoker.IDStr,
+							RecipientID: strconv.Itoa(int(yeti.invoker.ID)),
 						},
 						Data: &twitter.DirectMessageData{
 							Text: tweetText,

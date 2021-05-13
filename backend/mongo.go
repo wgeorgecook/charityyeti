@@ -34,14 +34,17 @@ func getDocument(id string) (*charityYetiData, error) {
 	// create an OID bson primitive based on the ID that comes in on the request
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
+		log.Errorf("cannot make id into ObjectId: %v", err)
 		return nil, err
 	}
 
 	// find and unmarshal the document to a struct we can return
 	var data charityYetiData
 	filter := bson.M{"_id": oid}
+	log.Debugf("looking for this document: %v", oid)
 	err = collection.FindOne(context.Background(), filter).Decode(&data)
 	if err != nil {
+		log.Errorf("cannot decode document: %v", err)
 		return nil, err
 	}
 

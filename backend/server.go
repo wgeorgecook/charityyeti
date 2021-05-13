@@ -20,114 +20,39 @@ type CRCResponse struct {
 }
 
 type IncomingWebhook struct {
-	ForUserID string `json:"for_user_id"`
+	ForUserID string `json:"for_user_id,omitempty"`
 	// DMs
 	DirectMessageEvents []struct {
-		Type             string `json:"type"`
-		ID               string `json:"id"`
-		CreatedTimestamp string `json:"created_timestamp"`
+		Type             string `json:"type,omitempty"`
+		ID               string `json:"id,omitempty"`
+		CreatedTimestamp string `json:"created_timestamp,omitempty"`
 		MessageCreate    struct {
 			Target struct {
-				RecipientID string `json:"recipient_id"`
-			} `json:"target"`
-			SenderID    string `json:"sender_id"`
+				RecipientID string `json:"recipient_id,omitempty"`
+			} `json:"target,omitempty"`
+			SenderID    string `json:"sender_id,omitempty"`
 			MessageData struct {
-				Text     string `json:"text"`
+				Text     string `json:"text,omitempty"`
 				Entities struct {
-					Hashtags     []interface{} `json:"hashtags"`
-					Symbols      []interface{} `json:"symbols"`
-					UserMentions []interface{} `json:"user_mentions"`
-					Urls         []interface{} `json:"urls"`
-				} `json:"entities"`
-			} `json:"message_data"`
-		} `json:"message_create"`
-	} `json:"direct_message_events"`
+					Hashtags     []interface{} `json:"hashtags,omitempty"`
+					Symbols      []interface{} `json:"symbols,omitempty"`
+					UserMentions []interface{} `json:"user_mentions,omitempty"`
+					Urls         []interface{} `json:"urls,omitempty"`
+				} `json:"entities,omitempty"`
+			} `json:"message_data,omitempty"`
+		} `json:"message_create,omitempty"`
+	} `json:"direct_message_events,omitempty"`
 	// Tweets
-	UserHasBlocked    bool `json:"user_has_blocked"`
+	UserHasBlocked    bool `json:"user_has_blocked,omitempty"`
 	TweetCreateEvents []struct {
-		CreatedAt            string      `json:"created_at"`
-		ID                   int64       `json:"id"`
-		IDStr                string      `json:"id_str"`
-		Text                 string      `json:"text"`
-		DisplayTextRange     []int       `json:"display_text_range"`
-		Source               string      `json:"source"`
-		Truncated            bool        `json:"truncated"`
-		InReplyToStatusID    int64       `json:"in_reply_to_status_id"`
-		InReplyToStatusIDStr string      `json:"in_reply_to_status_id_str"`
-		InReplyToUserID      int         `json:"in_reply_to_user_id"`
-		InReplyToUserIDStr   string      `json:"in_reply_to_user_id_str"`
-		InReplyToScreenName  string      `json:"in_reply_to_screen_name"`
-		User                 User        `json:"user"`
-		Geo                  interface{} `json:"geo"`
-		Coordinates          interface{} `json:"coordinates"`
-		Place                interface{} `json:"place"`
-		Contributors         interface{} `json:"contributors"`
-		IsQuoteStatus        bool        `json:"is_quote_status"`
-		QuoteCount           int         `json:"quote_count"`
-		ReplyCount           int         `json:"reply_count"`
-		RetweetCount         int         `json:"retweet_count"`
-		FavoriteCount        int         `json:"favorite_count"`
-		Entities             struct {
-			Hashtags     []interface{} `json:"hashtags"`
-			Urls         []interface{} `json:"urls"`
-			UserMentions []struct {
-				ScreenName string `json:"screen_name"`
-				Name       string `json:"name"`
-				ID         int    `json:"id"`
-				IDStr      string `json:"id_str"`
-				Indices    []int  `json:"indices"`
-			} `json:"user_mentions"`
-			Symbols []interface{} `json:"symbols"`
-		} `json:"entities"`
-		Favorited   bool   `json:"favorited"`
-		Retweeted   bool   `json:"retweeted"`
-		FilterLevel string `json:"filter_level"`
-		Lang        string `json:"lang"`
-		TimestampMs string `json:"timestamp_ms"`
-	} `json:"tweet_create_events"`
-}
-
-type User struct {
-	ID                             int           `json:"id"`
-	IDStr                          string        `json:"id_str"`
-	Name                           string        `json:"name"`
-	ScreenName                     string        `json:"screen_name"`
-	Location                       string        `json:"location"`
-	URL                            string        `json:"url"`
-	Description                    string        `json:"description"`
-	TranslatorType                 string        `json:"translator_type"`
-	Protected                      bool          `json:"protected"`
-	Verified                       bool          `json:"verified"`
-	FollowersCount                 int           `json:"followers_count"`
-	FriendsCount                   int           `json:"friends_count"`
-	ListedCount                    int           `json:"listed_count"`
-	FavouritesCount                int           `json:"favourites_count"`
-	StatusesCount                  int           `json:"statuses_count"`
-	CreatedAt                      string        `json:"created_at"`
-	UtcOffset                      interface{}   `json:"utc_offset"`
-	TimeZone                       interface{}   `json:"time_zone"`
-	GeoEnabled                     bool          `json:"geo_enabled"`
-	Lang                           interface{}   `json:"lang"`
-	ContributorsEnabled            bool          `json:"contributors_enabled"`
-	IsTranslator                   bool          `json:"is_translator"`
-	ProfileBackgroundColor         string        `json:"profile_background_color"`
-	ProfileBackgroundImageURL      string        `json:"profile_background_image_url"`
-	ProfileBackgroundImageURLHTTPS string        `json:"profile_background_image_url_https"`
-	ProfileBackgroundTile          bool          `json:"profile_background_tile"`
-	ProfileLinkColor               string        `json:"profile_link_color"`
-	ProfileSidebarBorderColor      string        `json:"profile_sidebar_border_color"`
-	ProfileSidebarFillColor        string        `json:"profile_sidebar_fill_color"`
-	ProfileTextColor               string        `json:"profile_text_color"`
-	ProfileUseBackgroundImage      bool          `json:"profile_use_background_image"`
-	ProfileImageURL                string        `json:"profile_image_url"`
-	ProfileImageURLHTTPS           string        `json:"profile_image_url_https"`
-	ProfileBannerURL               string        `json:"profile_banner_url"`
-	DefaultProfile                 bool          `json:"default_profile"`
-	DefaultProfileImage            bool          `json:"default_profile_image"`
-	Following                      interface{}   `json:"following"`
-	FollowRequestSent              interface{}   `json:"follow_request_sent"`
-	Notifications                  interface{}   `json:"notifications"`
-	WithheldInCountries            []interface{} `json:"withheld_in_countries"`
+		CreatedAt           string `json:"created_at,omitempty"`
+		ID                  int64  `json:"id,omitempty"`
+		Text                string `json:"text,omitempty"`
+		InReplyToStatusID   int64  `json:"in_reply_to_status_id,omitempty"`
+		InReplyToUserID     int    `json:"in_reply_to_user_id,omitempty"`
+		InReplyToScreenName string `json:"in_reply_to_screen_name,omitempty"`
+		User                *User  `json:"user,omitempty"`
+	} `json:"tweet_create_events,omitempty"`
 }
 
 // startServer spins up an http listener for this service on the

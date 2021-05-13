@@ -17,6 +17,12 @@ services:
             - DATABASE=${DATABASE}
             - COLLECTION=${COLLECTION}
             - PORT=${PORT}
+            - SEND_TWEETS=${SEND_TWEETS}
+            - BLOCK_LIST=${BLOCK_LIST}
+            - BEARER_TOKEN=${BEARER_TOKEN}
+            - WEBHOOK_CALLBACK_URL=${WEBHOOK_CALLBACK_URL}
+            - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
+            - CHARITY_YETI_ID=${CHARITY_YETI_ID}
         ports:
             - "8080:8080"
     frontend:
