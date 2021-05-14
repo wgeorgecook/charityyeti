@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dghubble/go-twitter/twitter"
 	"github.com/gorilla/mux"
 )
 
@@ -45,13 +46,13 @@ type IncomingWebhook struct {
 	// Tweets
 	UserHasBlocked    bool `json:"user_has_blocked,omitempty"`
 	TweetCreateEvents []struct {
-		CreatedAt           string `json:"created_at,omitempty"`
-		ID                  int64  `json:"id,omitempty"`
-		Text                string `json:"text,omitempty"`
-		InReplyToStatusID   int64  `json:"in_reply_to_status_id,omitempty"`
-		InReplyToUserID     int    `json:"in_reply_to_user_id,omitempty"`
-		InReplyToScreenName string `json:"in_reply_to_screen_name,omitempty"`
-		User                *User  `json:"user,omitempty"`
+		CreatedAt           string        `json:"created_at,omitempty"`
+		ID                  int64         `json:"id,omitempty"`
+		Text                string        `json:"text,omitempty"`
+		InReplyToStatusID   int64         `json:"in_reply_to_status_id,omitempty"`
+		InReplyToUserID     int           `json:"in_reply_to_user_id,omitempty"`
+		InReplyToScreenName string        `json:"in_reply_to_screen_name,omitempty"`
+		User                *twitter.User `json:"user,omitempty"`
 	} `json:"tweet_create_events,omitempty"`
 }
 
