@@ -24,7 +24,9 @@ if((count($uri) > 2) && !empty($uri[2])){
 		if(empty($output)){
 			$idmsg = "We were unable to find the tweet correlating to this ID";
 		} else {
-			if($output->donationValue){
+			if(!empty($output->donationValue)){
+				// TODO: maybe we should add the previous donation value to this one
+				// so we can return how much this person collectively donated?
 				$idmsg = "This ID has already been donated towards.";
 				if('sandbox' == BRAINTREE_ENV){
 					$_SESSION['donationkey'] = $id;
