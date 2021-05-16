@@ -222,7 +222,15 @@ func getSubscriptions() (bool, error) {
 	}
 	defer resp.Body.Close()
 
+	body, _ := ioutil.ReadAll(resp.Body)
+	log.Infof("webhook response from Twitter: %v", string(body))
+
 	if resp.StatusCode != http.StatusNoContent {
+		if resp.StatusCode == http.StatusUnauthorized {
+			// something wrong with authentication method
+			log.Error("error with authorization data, check your secrets and make sure the config is right")
+			return false, errors.New("could not authorize with Twitter")
+		}
 		// user does not have a subscription
 		log.Info("user does not have a subscription")
 		return false, nil

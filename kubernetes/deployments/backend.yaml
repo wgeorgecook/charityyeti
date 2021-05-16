@@ -46,7 +46,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: twitter
-              key: ACCESS_TOKEN
+              key: ACCESS_SECRET
         - name: SEND_TWEETS
           value: "true"
         - name: BLOCK_LIST
