@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: charityyeti-backend
+  labels:
+    app.kubernetes.io/name: charityyeti
+    app.kubernetes.io/component: backend
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: charityyeti-backend
+      app.kubernetes.io/component: backend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: charityyeti-backend
+        app.kubernetes.io/component: backend
+    spec:
+      containers:
+      - name: charityyeti-backend
+        image: williamcook/charityyeti-backend:latest
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+          - containerPort: 8080
+        env:
+        - name: CONSUMER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: twitter
+              key: CONSUMER_KEY
+        - name: CONSUMER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: twitter
+              key: CONSUMER_SECRET
+        - name: ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: twitter
+              key: ACCESS_TOKEN
+        - name: ACCESS_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: twitter
+              key: ACCESS_TOKEN
+        - name: SEND_TWEETS
+          value: "true"
+        - name: BLOCK_LIST
+          value: blockList
+        - name: BEARER_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: twitter
+              key: BEARER_TOKEN
+        - name: WEBHOOK_CALLBACK_URL
+          value: https://charityyeti.casadecook.com/webhook/listen
+        - name: ENVIRONMENT_NAME
+          value: dev
+        - name: CHARITY_YETI_ID
+          value: "1188150859319762944"
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: mongo
+              key: MONGO_URI
+        - name: DATABASE
+          value: charityyeti
+        - name: COLLECTION
+          value: twitterData
+        - name: PORT
+          value: "8080"
+        - name: TAG_VERSION
+          value: latest
