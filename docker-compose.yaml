@@ -1,6 +1,6 @@
 version: '3'
 services:
-    backend:
+    charityyeti-backend:
         build:
             context: .
             dockerfile: docker/Dockerfile.backend
@@ -25,7 +25,7 @@ services:
             - CHARITY_YETI_ID=${CHARITY_YETI_ID}
         ports:
             - "8080:8080"
-    frontend:
+    charityyeti-frontend:
         build:
             context: .
             dockerfile: docker/Dockerfile.frontend
@@ -33,11 +33,11 @@ services:
         image: williamcook/charityyeti-frontend:${TAG_VERSION}
         ports: 
             - "8082:80"
-    proxy:
-        build:
-            context: .
-            dockerfile: docker/Dockerfile.proxy
-        image: williamcook/charityyeti-proxy:${TAG_VERSION}
+    charityyeti-proxy:
+        # build:
+        #     context: .
+        #     dockerfile: docker/Dockerfile.proxy
+        image: williamcook/charityyeti-proxy:latest
         ports:
             - "80:80"
             - "443:443"

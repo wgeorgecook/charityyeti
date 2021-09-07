@@ -38,6 +38,9 @@ spec:
   ports:
   - port: 80
     targetPort: 80
+    nodePort: 30888
   selector:
+    app: charityyeti-proxy
     app.kubernetes.io/name: charityyeti
     app.kubernetes.io/component: proxy
+  type: NodePort
