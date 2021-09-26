@@ -23,21 +23,21 @@ services:
             - WEBHOOK_CALLBACK_URL=${WEBHOOK_CALLBACK_URL}
             - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
             - CHARITY_YETI_ID=${CHARITY_YETI_ID}
-        ports:
-            - "8080:8080"
+        # ports:
+        #     - "8080:8080"
     charityyeti-frontend:
         build:
             context: .
             dockerfile: docker/Dockerfile.frontend
         # image: ${DOCKER_REGISTRY}/charity-yeti-test-frontend:${TAG_VERSION}
         image: williamcook/charityyeti-frontend:${TAG_VERSION}
-        ports: 
-            - "8082:80"
+        # ports: 
+        #     - "8082:80"
     charityyeti-proxy:
-        # build:
-        #     context: .
-        #     dockerfile: docker/Dockerfile.proxy
-        image: williamcook/charityyeti-proxy:latest
+        build:
+            context: .
+            dockerfile: docker/Dockerfile.proxy
+        image: williamcook/charityyeti-proxy:${TAG_VERSION}
         ports:
             - "80:80"
             - "443:443"
