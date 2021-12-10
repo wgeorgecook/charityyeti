@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: charityyeti
+  labels:
+    app.kubernetes.io/name: charityyeti
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: charityyeti
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: charityyeti
+    spec:
+      containers:
+      - name: charityyeti-proxy
+        image: williamcook/charityyeti-proxy:kates1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+          - containerPort: 80
+      - name: charityyeti-frontend
+        image: docker.io/williamcook/charityyeti-frontend:kates1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+          - containerPort: 8888
+      - name: charityyeti-backend
+        image: williamcook/charityyeti-backend:kates
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+          - containerPort: 8080
+        env:
+        - name: CONSUMER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: twitter
+              key: CONSUMER_KEY
+        - name: CONSUMER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: twitter
+              key: CONSUMER_SECRET
+        - name: ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: twitter
+              key: ACCESS_TOKEN
+        - name: ACCESS_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: twitter
+              key: ACCESS_SECRET
+        - name: SEND_TWEETS
+          value: "false"
+        - name: BLOCK_LIST
+          value: blockList
+        - name: BEARER_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: twitter
+              key: BEARER_TOKEN
+        - name: WEBHOOK_CALLBACK_URL
+          value: https://charityyeti.casadecook.com/webhook/listen
+        - name: ENVIRONMENT_NAME
+          value: dev
+        - name: CHARITY_YETI_ID
+          value: "1188150859319762944"
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: mongo
+              key: MONGO_URI
+        - name: DATABASE
+          value: charityyeti
+        - name: COLLECTION
+          value: twitterData
+        - name: PORT
+          value: "8080"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: charityyeti-proxy
+  labels:
+    app.kubernetes.io/name: charityyeti
+    app.kubernetes.io/component: proxy
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  selector:
+    app.kubernetes.io/name: charityyeti
+  type: NodePort
