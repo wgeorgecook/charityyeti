@@ -24,7 +24,7 @@ print_r($postval);
 <?php
 //*
 $ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, "https://charityyeti.casadecook.com/get?id=5e330cf31398d78ea074d32c");
+curl_setopt($ch, CURLOPT_URL, "http://localhost/get?id=5e330cf31398d78ea074d32c");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 $output = json_decode(curl_exec($ch));
 curl_close($ch);

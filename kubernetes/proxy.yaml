@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: charityyeti-proxy
-        image: williamcook/charityyeti-proxy:latest
+        image: williamcook/charityyeti-proxy:kates
         resources:
           requests:
             cpu: 100m
@@ -36,9 +36,10 @@ metadata:
     app.kubernetes.io/component: proxy
 spec:
   ports:
-  - port: 80
+  - name: http
+    protocol: TCP
+    port: 80
     targetPort: 80
-    nodePort: 30888
   selector:
     app: charityyeti-proxy
     app.kubernetes.io/name: charityyeti

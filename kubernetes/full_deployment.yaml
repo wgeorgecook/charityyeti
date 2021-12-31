@@ -103,4 +103,4 @@ spec:
     targetPort: 80
   selector:
     app.kubernetes.io/name: charityyeti
-  type: NodePort
+  type: LoadBalancer

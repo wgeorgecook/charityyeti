@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: charityyeti-frontend
-        image: williamcook/charityyeti-frontend:latest
+        image: docker.io/williamcook/charityyeti-frontend:kates
         resources:
           requests:
             cpu: 100m
