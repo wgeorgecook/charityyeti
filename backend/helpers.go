@@ -223,7 +223,7 @@ func getSubscriptions() (bool, error) {
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
-	log.Infof("webhook response from Twitter: %v", string(body))
+	log.Infof("subscriptions response from Twitter: %v", string(body))
 
 	if resp.StatusCode != http.StatusNoContent {
 		if resp.StatusCode == http.StatusUnauthorized {

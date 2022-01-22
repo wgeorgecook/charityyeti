@@ -169,7 +169,7 @@ func webhookListener(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// print it out for debug
-	// log.Debugf("incoming webhook payload: %v", string(reqBytes))
+	log.Debugf("incoming webhook payload: %v", string(reqBytes))
 
 	// unmarshall it
 	var wh IncomingWebhook
@@ -382,15 +382,15 @@ func initWebhooks() error {
 
 	webhookId := ""
 	if len(webhooks) != 0 {
-		// checks and makes sure we're listening at the correct domain
-		if !strings.Contains(webhooks[0].URL, cfg.WebhookCallbakURL) {
+		// checks and makes sure we're listening at the correct domain and it's valid
+		if !strings.Contains(webhooks[0].URL, cfg.WebhookCallbakURL) || !webhooks[0].Valid {
 			// we aren't registered to the current deployment, and since we can only have
-			// one webhook we need to delete the existing one...
+			// one webhook we need to delete the existing one, or the webhook is not valid
 			deleteWebhook(webhooks[0].ID)
+		} else {
+			// we have a valid existing webhook
+			webhookId = webhooks[0].ID
 		}
-
-		// if we are, there's an existing webhook
-		webhookId = webhooks[0].ID
 	}
 
 	if webhookId == "" {

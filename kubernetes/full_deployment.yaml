@@ -24,7 +24,7 @@ spec:
         ports:
           - containerPort: 80
       - name: charityyeti-frontend
-        image: docker.io/williamcook/charityyeti-frontend:kates1
+        image: williamcook/charityyeti-frontend:kates1
         resources:
           requests:
             cpu: 100m
@@ -71,7 +71,7 @@ spec:
               name: twitter
               key: BEARER_TOKEN
         - name: WEBHOOK_CALLBACK_URL
-          value: https://charityyeti.casadecook.com/webhook/listen
+          value: http://charityyeti.casadecook.com/webhook/listen
         - name: ENVIRONMENT_NAME
           value: dev
         - name: CHARITY_YETI_ID
