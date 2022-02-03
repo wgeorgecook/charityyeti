@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-charityyeti-proxy
+spec:
+  rules:
+  - host: charityyeti.casadecook.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-proxy
+            port:
+              number: 443
+  ingressClassName: nginx

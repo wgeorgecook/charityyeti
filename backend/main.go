@@ -153,7 +153,8 @@ func main() {
 
 	// make sure we're listening to webhooks and are subscribed to one
 	if err := initWebhooks(); err != nil {
-		log.Fatalf("could not start charity yeti webhooks: %v", err)
+		log.Infof("could not start charity yeti webhooks: %v", err)
+		log.Info("we can't listen to webhooks, but we'll still start this up")
 	}
 
 	// listen for those sweet DMs
