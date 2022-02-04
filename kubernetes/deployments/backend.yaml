@@ -76,18 +76,3 @@ spec:
           value: "8080"
         - name: TAG_VERSION
           value: latest
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: charityyeti-backend
-  labels:
-    app.kubernetes.io/name: charityyeti-backend
-    app.kubernetes.io/component: backend
-spec:
-  ports:
-  - port: 8080
-    targetPort: 8080
-  selector:
-    app.kubernetes.io/name: charityyeti-backend
-    app.kubernetes.io/component: backend
