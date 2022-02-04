@@ -32,12 +32,15 @@ kind: Service
 metadata:
   name: charityyeti-frontend
   labels:
-    app.kubernetes.io/name: charityyeti
+    app.kubernetes.io/name: charityyeti-frontend
     app.kubernetes.io/component: frontend
 spec:
   ports:
-  - port: 8082
+  - name: http
+    protocol: TCP
+    port: 8082
     targetPort: 80
   selector:
-    app.kubernetes.io/name: charityyeti
+    app.kubernetes.io/name: charityyeti-frontend
     app.kubernetes.io/component: frontend
+  type: ClusterIP

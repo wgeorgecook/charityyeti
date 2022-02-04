@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: charityyeti-backend
   labels:
-    app.kubernetes.io/name: charityyeti
+    app.kubernetes.io/name: charityyeti-backend
     app.kubernetes.io/component: backend
 spec:
   selector:
@@ -82,12 +82,12 @@ kind: Service
 metadata:
   name: charityyeti-backend
   labels:
-    app.kubernetes.io/name: charityyeti
+    app.kubernetes.io/name: charityyeti-backend
     app.kubernetes.io/component: backend
 spec:
   ports:
   - port: 8080
     targetPort: 8080
   selector:
-    app.kubernetes.io/name: charityyeti
+    app.kubernetes.io/name: charityyeti-backend
     app.kubernetes.io/component: backend

@@ -15,8 +15,63 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: charityyeti-proxy
+            name: charityyeti-frontend
             port:
-              number: 443
+              number: 8082
+      - path: /get
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+      - path: /get/record
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+      - path: /get/donated/
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+      - path: /get/donated/all
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+      - path: /get/donors
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+      - path: /get/health
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+      - path: /oauth2/callback
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+      - path: /webhook/listen
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
   ingressClassName: nginx
-  
