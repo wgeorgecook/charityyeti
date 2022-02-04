@@ -25,41 +25,6 @@ spec:
             name: charityyeti-frontend
             port:
               number: 8082
-      - path: /get
-        pathType: Prefix
-        backend:
-          service:
-            name: charityyeti-backend
-            port:
-              number: 8080
-      - path: /get/record
-        pathType: Prefix
-        backend:
-          service:
-            name: charityyeti-backend
-            port:
-              number: 8080
-      - path: /get/donated/
-        pathType: Prefix
-        backend:
-          service:
-            name: charityyeti-backend
-            port:
-              number: 8080
-      - path: /get/donated/all
-        pathType: Prefix
-        backend:
-          service:
-            name: charityyeti-backend
-            port:
-              number: 8080
-      - path: /get/donors
-        pathType: Prefix
-        backend:
-          service:
-            name: charityyeti-backend
-            port:
-              number: 8080
       - path: /get/health
         pathType: Prefix
         backend:
