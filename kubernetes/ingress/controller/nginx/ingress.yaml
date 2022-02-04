@@ -3,6 +3,10 @@ kind: Ingress
 metadata:
   name: ingress-charityyeti-proxy
 spec:
+  tls:
+  - hosts:
+      - https-charityyeti.casadecook.com
+    secretName: charityyeti.casadecook.com
   rules:
   - host: charityyeti.casadecook.com
     http:
@@ -15,3 +19,4 @@ spec:
             port:
               number: 443
   ingressClassName: nginx
+  
