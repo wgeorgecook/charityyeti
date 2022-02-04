@@ -12,7 +12,7 @@ Allows Twitter users to raise money for Partner's in Health. If you see a tweet 
 
 ## Deployment
 
-We built the Charity Yeti on [Docker](https://www.docker.com) using [docker-compose](https://docs.docker.com/compose/). To build, issue `docker-compose build ${serviceName}`, where `${serviceName}` is either `frontend`, `backend`, or both. You can spin up a backend by cloning the repo and issuing `docker-compose up backend` from the same directory as the `Dockerfile.backend` (the repo root). This exposes the port set as your environment variable `PORT`. See the dependecies section below for setting environment variables for local development easily. The frontend can also be started using `docker-compose up frontend` from repo root where the `Dockerfile.frontend` lives. 
+We built the Charity Yeti on [Docker](https://www.docker.com) using [docker-compose](https://docs.docker.com/compose/). To build, issue `docker-compose build ${serviceName}`, where `${serviceName}` is either `charityyeti-frontend`, `charityyeti-backend`, or both. You can spin up a backend by cloning the repo and issuing `docker-compose up backend` from the same directory as the `Dockerfile.backend` (the repo root). This exposes the port set as your environment variable `PORT`. See the dependecies section below for setting environment variables for local development easily. The frontend can also be started using `docker-compose up frontend` from repo root where the `Dockerfile.frontend` lives. The production deployment of Charity Yeti runs on [Kubernetes](https://kubernetes.io) hosted by [Google Cloud](https://cloud.google.com).
 
 ## Code of Conduct
 
