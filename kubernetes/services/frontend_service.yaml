@@ -10,7 +10,7 @@ spec:
   - name: http
     protocol: TCP
     port: 8082
-    targetPort: 80
+    targetPort: 8888
   selector:
     app.kubernetes.io/name: charityyeti-frontend
     app.kubernetes.io/component: frontend

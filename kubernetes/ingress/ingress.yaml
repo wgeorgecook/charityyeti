@@ -18,6 +18,13 @@ spec:
             name: charityyeti-frontend
             port:
               number: 8082
+      - path: /donate
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-frontend
+            port:
+              number: 8082
       - path: /get
         pathType: Prefix
         backend:

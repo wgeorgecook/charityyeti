@@ -29,15 +29,6 @@ services:
         build:
             context: .
             dockerfile: docker/Dockerfile.frontend
-        # image: ${DOCKER_REGISTRY}/charity-yeti-test-frontend:${TAG_VERSION}
         image: williamcook/charityyeti-frontend:${TAG_VERSION}
         # ports: 
         #     - "8082:80"
-    charityyeti-proxy:
-        build:
-            context: .
-            dockerfile: docker/Dockerfile.proxy
-        image: williamcook/charityyeti-proxy:${TAG_VERSION}
-        ports:
-            - "80:80"
-            - "443:443"

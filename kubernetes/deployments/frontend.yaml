@@ -19,10 +19,10 @@ spec:
     spec:
       containers:
       - name: charityyeti-frontend
-        image: docker.io/williamcook/charityyeti-frontend:kates
+        image: docker.io/williamcook/charityyeti-frontend:${TAG_VERSION}
         resources:
           requests:
             cpu: 100m
             memory: 100Mi
         ports:
-          - containerPort: 80
+          - containerPort: 8888

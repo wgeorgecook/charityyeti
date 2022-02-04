@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: charityyeti-backend
-        image: williamcook/charityyeti-backend:kates
+        image: williamcook/charityyeti-backend:${TAG_VERSION}
         imagePullPolicy: Always
         resources:
           requests:
@@ -75,4 +75,4 @@ spec:
         - name: PORT
           value: "8080"
         - name: TAG_VERSION
-          value: latest
+          value: ${TAG_VERSION}
