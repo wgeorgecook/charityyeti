@@ -1,9 +1,9 @@
 version: '3'
 services:
-    backend:
+    charityyeti-backend:
         build:
             context: .
-            dockerfile: Dockerfile.backend
+            dockerfile: docker/Dockerfile.backend
         # image: ${DOCKER_REGISTRY}/charity-yeti-test-backend:${TAG_VERSION}
         image: williamcook/charityyeti-backend:${TAG_VERSION}
         env_file: 
@@ -23,21 +23,12 @@ services:
             - WEBHOOK_CALLBACK_URL=${WEBHOOK_CALLBACK_URL}
             - ENVIRONMENT_NAME=${ENVIRONMENT_NAME}
             - CHARITY_YETI_ID=${CHARITY_YETI_ID}
-        ports:
-            - "8080:8080"
-    frontend:
+        # ports:
+        #     - "8080:8080"
+    charityyeti-frontend:
         build:
             context: .
-            dockerfile: Dockerfile.frontend
-        # image: ${DOCKER_REGISTRY}/charity-yeti-test-frontend:${TAG_VERSION}
+            dockerfile: docker/Dockerfile.frontend
         image: williamcook/charityyeti-frontend:${TAG_VERSION}
-        ports: 
-            - "8082:80"
-    proxy:
-        build:
-            context: .
-            dockerfile: Dockerfile.proxy
-        image: williamcook/charityyeti-proxy:${TAG_VERSION}
-        ports:
-            - "80:80"
-            - "443:443"
+        # ports: 
+        #     - "8082:80"

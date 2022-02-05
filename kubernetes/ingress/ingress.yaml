@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-charityyeti-proxy
+spec:
+  tls:
+  - hosts:
+      - https-charityyeti.casadecook.com
+    secretName: charityyeti.casadecook.com
+  rules:
+  - host: charityyeti.casadecook.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-frontend
+            port:
+              number: 8082
+      - path: /donate
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-frontend
+            port:
+              number: 8082
+      - path: /get/health
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+      - path: /oauth2/callback
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+      - path: /webhook/listen
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+  ingressClassName: nginx
