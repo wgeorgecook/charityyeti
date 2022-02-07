@@ -11,11 +11,30 @@ import (
 	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/google/uuid"
 )
 
-const BAD_ROBOT = "twitter: 226 This request looks like it might be automated. To protect our users from spam and other malicious activity, we can't complete this action right now. Please try again later."
+// BadRobot is our rate limiting message
+const BadRobot = "twitter: 226 This request looks like it might be automated. To protect our users from spam and other malicious activity, we can't complete this action right now. Please try again later."
+
+// yetiInvokedData holds tweet data from an invocation of @CharityYeti
+type yetiInvokedData struct {
+	invoker         *twitter.User
+	honorary        *twitter.User
+	invokerTweetID  int64
+	originalTweetID int64
+}
+
+// sucessfulDonationData holds the data we need to create our unique link
+// we message to users invoking the Yeti
+type successfulDonationData struct {
+	invoker                string
+	honorary               string
+	donationValue          float32
+	invokerTweetID         int64
+	originalTweetID        int64
+	invokerResponseTweetID int64
+}
 
 // processInvocation parses an incoming tweet from the tweetQueue, pulls out the user who sent it, the ID of the
 // originating tweet, and passes it to respondToInvocation to send to Twitter
@@ -42,10 +61,10 @@ func processInvocation() {
 				invokerTweetID:  incomingTweet.TweetCreateEvents[0].ID,
 				originalTweetID: incomingTweet.TweetCreateEvents[0].InReplyToStatusID,
 			}
-
-			err := respondToInvocation(yeti)
+			ctx := generateContextWithRequestId(context.Background())
+			err := respondToInvocation(ctx, yeti)
 			if err != nil {
-				log.Error(err)
+				log.Errorf("could not response to invocation: %v", err)
 			}
 		}
 	}
@@ -97,42 +116,61 @@ func generateResponseTweetText(link string) string {
 }
 
 // respondToInvocation receives an incoming tweet from a stream, and will respond to it with a link to donate via the
-// Charity Yeti website. The donation link includes an id for a Mongo document for the front end to retrieve and add
+// Charity Yeti website. The donation link includes an id for the record in the database the front end retrieves and adds
 // on the donation value after a successful donation.
-func respondToInvocation(yeti yetiInvokedData) error {
-	if existsInBlockList(strconv.Itoa(int(yeti.invoker.ID))) {
+func respondToInvocation(ctx context.Context, yeti yetiInvokedData) error {
+	user, err := getDonor(ctx, strconv.Itoa(int(yeti.invoker.ID)))
+	if err != nil {
+		// check this to see if we need to create the user
+		log.Errorf("unable to get user on respond to invocation: %v", err)
+	}
+	if user == nil {
+		if err := createDonor(ctx, &Donor{TwitterUser: newTwitterUser(yeti.invoker)}); err != nil {
+			// heck
+			log.Errorf("could not create new donor on first time invocation: %v", err)
+			return err
+		}
+	} else if user.DoNotContact {
 		// this user asked us not to contact them so we'll skip over
-		return errors.New(fmt.Sprintf("user %v (%v) asked us not to contact them", yeti.invoker.ScreenName, yeti.invoker.ID))
+		return fmt.Errorf("user %v (%v) asked us not to contact them", yeti.invoker.ScreenName, yeti.invoker.ID)
 	}
 	if yeti.honorary.ScreenName != "" {
-		dataID := primitive.NewObjectID()
-		donateLink := fmt.Sprintf("https://charityyeti.casadecook.com?id=%v", dataID.Hex()) // TODO: change this to production
+		// make sure this honorary exists in the db
+		honorary, err := getHonorary(ctx, yeti.honorary.IDStr)
+		if err != nil {
+			log.Errorf("could not get this honorary from the database: %v", err)
+		}
+		if honorary == nil {
+			if err := createHonorary(ctx, &Honorary{TwitterUser: newTwitterUser(yeti.honorary)}); err != nil {
+				log.Errorf("could not create honorary on first time being honored after invocation: %v", err)
+			}
+		}
+		id := uuid.NewString()
+		donateLink := fmt.Sprintf("%s?id=%s", cfg.PublicURL, id) // TODO: change this to production
 		tweetText := generateResponseTweetText(donateLink)
 
 		if cfg.SendTweets {
-			// create the record in Mongo
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			data := bson.M{
-				"_id":             dataID,
-				"invoker":         yeti.invoker,
-				"honorary":        yeti.honorary,
-				"invokerTweetID":  yeti.invokerTweetID,
-				"originalTweetID": yeti.originalTweetID,
+			// create the donation record
+			donation := Donation{
+				ID:              id,
+				OriginalTweetID: yeti.originalTweetID,
+				InvokerTweetID:  yeti.invokerTweetID,
+				Donor:           &Donor{TwitterUser: newTwitterUser(yeti.invoker)},
+				Honorary:        &Honorary{TwitterUser: newTwitterUser(yeti.honorary)},
+				CreatedAt:       time.Now(),
 			}
-			log.Infow("Creating mongo document")
-			collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
-			_, err := collection.InsertOne(ctx, data)
 
-			if err != nil {
-				log.Errorf(fmt.Sprintf("could not create Mongo document: %v", err))
+			// save it to the database
+			if err := createDonation(ctx, &donation); err != nil {
+				log.Errorf("could not insert donation in database: %v", err)
+				return err
 			}
 
 			// send the tweet
 			log.Infow("Actually sending this!")
 
 			// send a DM
-			_, _, err = twitterClient.DirectMessages.EventsNew(&twitter.DirectMessageEventsNewParams{
+			_, _, err := twitterClient.DirectMessages.EventsNew(&twitter.DirectMessageEventsNewParams{
 				Event: &twitter.DirectMessageEvent{
 					Type: "message_create",
 					Message: &twitter.DirectMessageEventMessage{
@@ -156,15 +194,10 @@ func respondToInvocation(yeti yetiInvokedData) error {
 				}
 
 				// now that we have a response tweet, we need to save it's ID back to the db so we can reply to this later
-				update := bson.M{
-					"$set": bson.M{"invokerResponseTweetID": &responseTweet.ID},
-				}
-
-				filter := bson.M{"_id": dataID}
-
-				_, err = collection.UpdateOne(ctx, filter, update)
+				donation.InvokerResponseTweetID = responseTweet.ID
+				err = updateDonation(ctx, &donation)
 				if err != nil {
-					log.Errorf("could not update document with this responded tweet ID: %v", err)
+					log.Errorf("could not update databas with this responded tweet ID: %v", err)
 					return err
 				}
 			}
@@ -190,25 +223,25 @@ func respondToInvocation(yeti yetiInvokedData) error {
 // and we know a donation was processed successfully. It's responsible for updating the Mongo document
 // with the donation value, and then sends a tweet letting the original tweeter that
 // someone donated because of their tweets.
-func goodDonation(c charityYetiData) error {
+func goodDonation(ctx context.Context, c Donation) error {
 	log.Info("Good donation received - responding to it")
+
+	// update the database
+	if err := updateDonation(ctx, &c); err != nil {
+		log.Errorf("Could not update database after a good donation: %v", err)
+		// I don't want to return here becuase the donation was still successful
+		// and we want to spread awareness
+		// TODO: some sort of backup for this so we have record
+	}
 
 	// set the values for a successfulDonationData struct
 	tweet := successfulDonationData{
-		invoker:                c.Invoker.ScreenName,
+		invoker:                c.Donor.ScreenName,
 		honorary:               c.Honorary.ScreenName,
 		donationValue:          c.DonationValue,
 		invokerTweetID:         c.InvokerTweetID,
 		originalTweetID:        c.OriginalTweetID,
 		invokerResponseTweetID: c.InvokerResponseTweetID,
-	}
-
-	// update the Mongo document
-	if _, err := updateDocument(c); err != nil {
-		log.Errorf("Could not update Mongo after a good donation: %v", err)
-		// I don't want to return here becuase the donation was still successful
-		// and we want to spread awareness
-		// TODO: some sort of backup for this so we have record
 	}
 
 	log.Info(fmt.Sprintf(
@@ -236,11 +269,11 @@ func generateSuccessfulDonationTweetText(invoker string, donation float32) strin
 		"*Excited Yeti Noises*",
 	}
 	thanks := []string{
-		fmt.Sprintf("Thanks to this extremely excellent tweet @%v donated $%v to Partner's in Health!", invoker, donation),
-		fmt.Sprintf("@%v thought your tweet was so great, they donated $%v to Partner's in Health to celebrate!", invoker, donation),
+		fmt.Sprintf("Thanks to this extremely excellent tweet @%v donated $%v to Partners in Health!", invoker, donation),
+		fmt.Sprintf("@%v thought your tweet was so great, they donated $%v to Partners in Health to celebrate!", invoker, donation),
 		fmt.Sprintf("@%v loved your tweet so much they gave $%v to Partner's in Health to show some gratitude!", invoker, donation),
-		fmt.Sprintf("@%v donated $%v to Partner's because your tweet was THAT GOOD.", invoker, donation),
-		fmt.Sprintf("Partner's In Health has $%v extra thanks to this awesome tweet that @%v loved so much.", donation, invoker),
+		fmt.Sprintf("@%v donated $%v to Partners because your tweet was THAT GOOD.", invoker, donation),
+		fmt.Sprintf("Partners In Health has $%v extra thanks to this awesome tweet that @%v loved so much.", donation, invoker),
 	}
 
 	congrats := []string{
@@ -330,7 +363,7 @@ func replyToDM(userID, dmText string) error {
 	})
 
 	if err != nil {
-		if err.Error() == BAD_ROBOT || resp.StatusCode == http.StatusTooManyRequests {
+		if err.Error() == BadRobot || resp.StatusCode == http.StatusTooManyRequests {
 			log.Error("twitter is limiting our ability to send messages, we need to take a break")
 			// there's a x-rate-limit-reset header on the response that tells us how long
 			// until rates are reset so we wait that long
@@ -359,6 +392,7 @@ func processDM() {
 		// when a DM gets received from the queue, start processing
 		case incomingMessage := <-dmQueue:
 			log.Info("incoming message on DM Queue")
+			ctx := generateContextWithRequestId(context.Background())
 			confirmBlock := "Thanks for lettings us know you don't want us contacting you. If you change your mind, you can reply with START."
 			confirmUnblock := "*Excited Yeti Noises* We're so glad you want to use Charity Yeti again! You're good to go from here. If you change your mind, you can reply with STOP."
 			unknownMessage := "Charity Yeti is a work in progress and isn't too smart yet. If you want us to leave you alone, reply with STOP."
@@ -391,7 +425,7 @@ func processDM() {
 					log.Errorf("Could not DM user %v affirming no contact: %v", senderId, err)
 				}
 				// process the add to block list
-				if err := addBlockList(senderId); err != nil {
+				if err := addDoNotContact(ctx, senderId); err != nil {
 					log.Errorf("Could not add this user to the block list. Manually add user %v to block list: %v", senderId, err)
 				}
 			case "start":
@@ -402,14 +436,14 @@ func processDM() {
 					log.Errorf("Could not DM user %v affirming consent to contact: %v", senderId, err)
 				}
 				// remove this user from the block list
-				if err := removeBlockList(senderId); err != nil {
+				if err := removeDoNotContact(ctx, senderId); err != nil {
 					log.Errorf("Could not remove this user from the block list. Manually remove user %v from block list: %v", senderId, err)
 				}
 			default:
 				// we don't know what this user wants
 				log.Info("Received a DM without a keyword")
 				// first check and make sure we aren't contacting them if they don't want us to
-				if existsInBlockList(senderId) {
+				if checkDoNotContact(ctx, senderId) {
 					// they don't want us contacting them
 					log.Info("user is in block list and doesn't want us to contact them")
 				} else {

@@ -13,9 +13,6 @@ services:
             - CONSUMER_SECRET=${CONSUMER_SECRET}
             - ACCESS_TOKEN=${ACCESS_TOKEN}
             - ACCESS_SECRET=${ACCESS_SECRET}
-            - MONGO_URI=${MONGO_URI}
-            - DATABASE=${DATABASE}
-            - COLLECTION=${COLLECTION}
             - PORT=${PORT}
             - SEND_TWEETS=${SEND_TWEETS}
             - BLOCK_LIST=${BLOCK_LIST}
@@ -32,3 +29,11 @@ services:
         image: williamcook/charityyeti-frontend:${TAG_VERSION}
         # ports: 
         #     - "8082:80"
+    postgres:
+        image: postgres
+        environment:
+            - POSTGRES_NAME=charityyeti
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+        ports:
+            - "5432:5432"

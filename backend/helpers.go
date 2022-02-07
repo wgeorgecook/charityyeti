@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/dghubble/go-twitter/twitter"
+	"github.com/google/uuid"
 	oauth1 "github.com/klaidas/go-oauth1"
 
 	"github.com/ChimeraCoder/anaconda"
@@ -33,6 +35,14 @@ func extractID(w http.ResponseWriter, r *http.Request) (string, error) {
 	log.Infow("Getting record", zap.String("id", id[0]))
 
 	return id[0], nil
+}
+
+func generateRequestId() string {
+	return uuid.NewString()
+}
+
+func generateContextWithRequestId(ctx context.Context) context.Context {
+	return context.WithValue(ctx, "request_id", generateRequestId())
 }
 
 // getInReplyToTwitterUser is a helper function takes the immutable ID of a Twitter user (IE - the honorary on an invoked
