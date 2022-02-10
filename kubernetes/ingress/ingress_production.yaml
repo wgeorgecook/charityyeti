@@ -1,0 +1,59 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-charityyeti-proxy
+  annotations:
+    # specify the name of the global IP address resource to be associated with the HTTP(S) Load Balancer.
+    kubernetes.io/ingress.global-static-ip-name: charityyeti-ip
+    # add an annotation indicating the issuer to use.
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # controls whether the ingress is modified ‘in-place’,
+    # or a new one is created specifically for the HTTP01 challenge.
+    acme.cert-manager.io/http01-edit-in-place: "true"
+  labels:
+    app: charityyeti
+spec:
+  tls:
+  - hosts:
+      - charityyeti.com
+    secretName: charityyeti.com
+  rules:
+  - host: charityyeti.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-frontend
+            port:
+              number: 8082
+      - path: /donate
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-frontend
+            port:
+              number: 8082
+      - path: /get/health
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+      - path: /oauth2/callback
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+      - path: /webhook/listen
+        pathType: Prefix
+        backend:
+          service:
+            name: charityyeti-backend
+            port:
+              number: 8080
+  ingressClassName: nginx
