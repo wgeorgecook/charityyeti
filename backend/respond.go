@@ -236,11 +236,11 @@ func generateSuccessfulDonationTweetText(invoker string, donation float32) strin
 		"*Excited Yeti Noises*",
 	}
 	thanks := []string{
-		fmt.Sprintf("Thanks to this extremely excellent tweet @%v donated $%v to Partner's in Health!", invoker, donation),
-		fmt.Sprintf("@%v thought your tweet was so great, they donated $%v to Partner's in Health to celebrate!", invoker, donation),
-		fmt.Sprintf("@%v loved your tweet so much they gave $%v to Partner's in Health to show some gratitude!", invoker, donation),
-		fmt.Sprintf("@%v donated $%v to Partner's because your tweet was THAT GOOD.", invoker, donation),
-		fmt.Sprintf("Partner's In Health has $%v extra thanks to this awesome tweet that @%v loved so much.", donation, invoker),
+		fmt.Sprintf("Thanks to this extremely excellent tweet @%v donated $%v to Partners in Health!", invoker, donation),
+		fmt.Sprintf("@%v thought your tweet was so great, they donated $%v to Partners in Health to celebrate!", invoker, donation),
+		fmt.Sprintf("@%v loved your tweet so much they gave $%v to Partners in Health to show some gratitude!", invoker, donation),
+		fmt.Sprintf("@%v donated $%v to Partners because your tweet was THAT GOOD.", invoker, donation),
+		fmt.Sprintf("Partners In Health has $%v extra thanks to this awesome tweet that @%v loved so much.", donation, invoker),
 	}
 
 	congrats := []string{

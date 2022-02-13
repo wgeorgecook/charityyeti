@@ -1,14 +1,14 @@
 # Raise Money For Partners In Health
 
-For the past decade, the Vlogbrothers and Nerdfigtheria continuously support Partners In Health as a beneificiary of the annual [Project for Awesome](http://www.projectforawesome.com). In 2019, Hank and John started an inititive to fund a new maternal care facility in Sierra Leon to help reduce maternal morality in the Kona district, where Partner's In Health works tirelessly to improve healthcare.
+For the past decade, the Vlogbrothers and Nerdfigtheria continuously support Partners In Health as a beneificiary of the annual [Project for Awesome](http://www.projectforawesome.com). In 2019, Hank and John started an inititive to fund a new maternal care facility in Sierra Leon to help reduce maternal morality in the Kona district, where Partners In Health works tirelessly to improve healthcare.
 
 ## But first, some background
 
-Read about the Green family connection to Partner's In Health on the [Partner's In Health website](https://www.pih.org/vlogbrothers-support-maternal-health). Find more about the [fundraiser for this materity center in this Vlogbrothers video on YouTube](https://www.youtube.com/watch?v=DwDjsNFHVhQ).
+Read about the Green family connection to Partners In Health on the [Partners In Health website](https://www.pih.org/vlogbrothers-support-maternal-health). Find more about the [fundraiser for this materity center in this Vlogbrothers video on YouTube](https://www.youtube.com/watch?v=DwDjsNFHVhQ).
 
 ## This Bot
 
-Allows Twitter users to raise money for Partner's in Health. If you see a tweet so good you want to donate to Partner's In Health on behalf of that tweeter, respond to the tweet and [@CharityYeti](https://twitter.com/charityyeti). We'll send you a link to donate to Partner's in Health and will tweet back letting the original tweeter that you appreciated their tweet to support maternal health in Sierra Leon! [This tweet by Hank](https://twitter.com/hankgreen/status/1186824079120011264) is the basis of this project.
+Allows Twitter users to raise money for Partners in Health. If you see a tweet so good you want to donate to Partners In Health on behalf of that tweeter, respond to the tweet and [@CharityYeti](https://twitter.com/charityyeti). We'll send you a link to donate to Partners in Health and will tweet back letting the original tweeter that you appreciated their tweet to support maternal health in Sierra Leon! [This tweet by Hank](https://twitter.com/hankgreen/status/1186824079120011264) is the basis of this project.
 
 ## Deployment
 
