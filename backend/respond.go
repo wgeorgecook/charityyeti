@@ -28,7 +28,7 @@ func processInvocation() {
 		case incomingTweet := <-tweetQueue:
 			// check and make sure this is specifically invoking us and not
 			// just replying or randomly @'ing us
-			if !strings.Contains(strings.ToLower(incomingTweet.TweetCreateEvents[0].Text), "hey @charityetidev") {
+			if !strings.Contains(strings.ToLower(incomingTweet.TweetCreateEvents[0].Text), cfg.InvocationPhrase) {
 				// this isn't a specific invokation so going to ignore it
 				log.Infof("this isn't an invocation so we are going to ignore it: %v", incomingTweet.TweetCreateEvents[0].Text)
 				break
@@ -106,7 +106,7 @@ func respondToInvocation(yeti yetiInvokedData) error {
 	}
 	if yeti.honorary.ScreenName != "" {
 		dataID := primitive.NewObjectID()
-		donateLink := fmt.Sprintf("https://charityyeti.casadecook.com?id=%v", dataID.Hex()) // TODO: change this to production
+		donateLink := fmt.Sprintf("%v?id=%v", cfg.PublicURL, dataID.Hex()) // TODO: change this to production
 		tweetText := generateResponseTweetText(donateLink)
 
 		if cfg.SendTweets {
@@ -236,11 +236,11 @@ func generateSuccessfulDonationTweetText(invoker string, donation float32) strin
 		"*Excited Yeti Noises*",
 	}
 	thanks := []string{
-		fmt.Sprintf("Thanks to this extremely excellent tweet @%v donated $%v to Partner's in Health!", invoker, donation),
-		fmt.Sprintf("@%v thought your tweet was so great, they donated $%v to Partner's in Health to celebrate!", invoker, donation),
-		fmt.Sprintf("@%v loved your tweet so much they gave $%v to Partner's in Health to show some gratitude!", invoker, donation),
-		fmt.Sprintf("@%v donated $%v to Partner's because your tweet was THAT GOOD.", invoker, donation),
-		fmt.Sprintf("Partner's In Health has $%v extra thanks to this awesome tweet that @%v loved so much.", donation, invoker),
+		fmt.Sprintf("Thanks to this extremely excellent tweet @%v donated $%v to Partners in Health!", invoker, donation),
+		fmt.Sprintf("@%v thought your tweet was so great, they donated $%v to Partners in Health to celebrate!", invoker, donation),
+		fmt.Sprintf("@%v loved your tweet so much they gave $%v to Partners in Health to show some gratitude!", invoker, donation),
+		fmt.Sprintf("@%v donated $%v to Partners because your tweet was THAT GOOD.", invoker, donation),
+		fmt.Sprintf("Partners In Health has $%v extra thanks to this awesome tweet that @%v loved so much.", donation, invoker),
 	}
 
 	congrats := []string{

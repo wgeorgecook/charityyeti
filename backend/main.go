@@ -22,23 +22,22 @@ import (
 
 // type to hold environment variables
 type config struct {
-	ConsumerKey        string `env:"CONSUMER_KEY"`
-	ConsumerSecret     string `env:"CONSUMER_SECRET"`
-	AccessToken        string `env:"ACCESS_TOKEN"`
-	AccessSecret       string `env:"ACCESS_SECRET"`
-	Port               string `env:"PORT" envDefault:"8080"`
-	ConnectionURI      string `env:"MONGO_URI"`
-	Database           string `env:"DATABASE"`
-	Collection         string `env:"COLLECTION"`
-	BlockList          string `env:"BLOCK_LIST"`
-	MiddlewareEndpoint string `env:"MIDDLEWARE_ENDPOINT"`
-	MiddlewareToken    string `env:"MIDDLEWARE_TOKEN_ENDPOINT"`
-	MiddlewareHealth   string `env:"MIDDLEWARE_HEALTH"`
-	SendTweets         bool   `env:"SEND_TWEETS"`
-	BearerToken        string `env:"BEARER_TOKEN"`
-	WebhookCallbakURL  string `env:"WEBHOOK_CALLBACK_URL"`
-	EnvironmentName    string `env:"ENVIRONMENT_NAME"`
-	CharityYetiId      string `env:"CHARITY_YETI_ID"`
+	ConsumerKey       string `env:"CONSUMER_KEY"`
+	ConsumerSecret    string `env:"CONSUMER_SECRET"`
+	AccessToken       string `env:"ACCESS_TOKEN"`
+	AccessSecret      string `env:"ACCESS_SECRET"`
+	Port              string `env:"PORT" envDefault:"8080"`
+	ConnectionURI     string `env:"MONGO_URI"`
+	Database          string `env:"MONGO_DATABASE"`
+	Collection        string `env:"MONGO_COLLECTION"`
+	BlockList         string `env:"BLOCK_LIST"`
+	SendTweets        bool   `env:"SEND_TWEETS" envDefault:"false"`
+	BearerToken       string `env:"BEARER_TOKEN"`
+	WebhookCallbakURL string `env:"WEBHOOK_CALLBACK_URL"`
+	EnvironmentName   string `env:"ENVIRONMENT_NAME"`
+	CharityYetiId     string `env:"CHARITY_YETI_ID"`
+	PublicURL         string `env:"PUBLIC_URL"`
+	InvocationPhrase  string `env:"INVOCATION_PHRASE"`
 }
 
 // type to gather tweet data from an invocation of @CharityYeti
