@@ -58,20 +58,20 @@ spec:
               name: twitter
               key: BEARER_TOKEN
         - name: WEBHOOK_CALLBACK_URL
-          value: https://charityyeti.casadecook.com/webhook/listen
+          value: ${WEBHOOK_CALLBACK_URL}
         - name: ENVIRONMENT_NAME
-          value: dev
+          value: ${ENVIRONMENT_NAME}
         - name: CHARITY_YETI_ID
-          value: "1188150859319762944"
+          value: ${CHARITY_YETI_ID}
         - name: MONGO_URI
           valueFrom:
             secretKeyRef:
               name: mongo
               key: MONGO_URI
         - name: DATABASE
-          value: charityyeti
+          value: ${MONGO_DATABASE}
         - name: COLLECTION
-          value: twitterData
+          value: ${MONGO_COLLECTION}
         - name: PORT
           value: "8080"
         - name: TAG_VERSION
