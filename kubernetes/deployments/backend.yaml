@@ -63,6 +63,10 @@ spec:
           value: ${ENVIRONMENT_NAME}
         - name: CHARITY_YETI_ID
           value: ${CHARITY_YETI_ID}
+        - name: INVOCATION_PHRASE
+          value: ${INVOCATION_PHRASE}
+        - name: PUBLIC_URL
+          value: ${PUBLIC_URL}
         - name: MONGO_URI
           valueFrom:
             secretKeyRef:
@@ -75,4 +79,4 @@ spec:
         - name: PORT
           value: "8080"
         - name: TAG_VERSION
-          value: ${TAG_VERSION}
+          value: production

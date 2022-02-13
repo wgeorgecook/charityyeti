@@ -28,7 +28,7 @@ func processInvocation() {
 		case incomingTweet := <-tweetQueue:
 			// check and make sure this is specifically invoking us and not
 			// just replying or randomly @'ing us
-			if !strings.Contains(strings.ToLower(incomingTweet.TweetCreateEvents[0].Text), "hey @charityetidev") {
+			if !strings.Contains(strings.ToLower(incomingTweet.TweetCreateEvents[0].Text), cfg.InvocationPhrase) {
 				// this isn't a specific invokation so going to ignore it
 				log.Infof("this isn't an invocation so we are going to ignore it: %v", incomingTweet.TweetCreateEvents[0].Text)
 				break
@@ -106,7 +106,7 @@ func respondToInvocation(yeti yetiInvokedData) error {
 	}
 	if yeti.honorary.ScreenName != "" {
 		dataID := primitive.NewObjectID()
-		donateLink := fmt.Sprintf("https://charityyeti.casadecook.com?id=%v", dataID.Hex()) // TODO: change this to production
+		donateLink := fmt.Sprintf("%v?id=%v", cfg.PublicURL, dataID.Hex()) // TODO: change this to production
 		tweetText := generateResponseTweetText(donateLink)
 
 		if cfg.SendTweets {
