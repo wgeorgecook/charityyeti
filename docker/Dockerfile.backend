@@ -1,5 +1,5 @@
 # Build the Go API
-FROM golang:latest AS backend
+FROM golang:latest AS builder
 ADD ./backend /backend
 WORKDIR /backend
 RUN go mod download
@@ -8,7 +8,9 @@ WORKDIR /
 RUN rm -rf backend/
 
 # make the Go binary executable and run
+FROM golang:1.16-alpine
+COPY --from=builder /usr/local/charityyeti /usr/local/charityyeti
 WORKDIR /usr/local/
-RUN chmod +x ./charityyeti
+RUN chmod +x charityyeti
 EXPOSE 8080
 CMD ./charityyeti
