@@ -373,7 +373,7 @@ func successfulDonation(w http.ResponseWriter, r *http.Request) {
 func initWebhooks() error {
 	// first get the webhooks we already have registered
 	v := url.Values{}
-	v.Add("env_name", "dev")
+	v.Add("env_name",  cfg.EnvironmentName)
 	webhooks, err := getWebhooks()
 	if err != nil {
 		log.Errorf("could not get registered webhooks: %v", err)
