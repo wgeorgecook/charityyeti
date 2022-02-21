@@ -1,0 +1,115 @@
+body{
+	font: 500 1.9vh/3.4vh 'Roboto', sans-serif;
+	background-color: #f7f7ff;
+	color: #7d11ff;
+	overflow: hidden;
+}
+
+#logo{
+	background: url("../imgs/logo.png") 50% no-repeat;
+	background-size: contain;
+	height: 2.2vh;
+	margin: 3.1vh auto 11.3vh;
+}
+#mothermold{
+	height: 64.2vh;
+	width: 41.4vh;
+	margin: 0 auto;
+	max-width: 90%;
+	border-radius: 4vh;
+}
+.modal{
+	background-size: contain;
+	background-repeat: no-repeat;
+	height: 64.2vh;
+	width: 41.4vh;
+	max-width: 100%;
+	margin: 0 auto;
+	position: relative;
+}
+.welcome1{
+	background-image: url("../imgs/welcome_1_full.png");
+}
+.welcome2{
+	background-image: url("../imgs/welcome_2_full.png");
+}
+.welcome3{
+	background-image: url("../imgs/welcome_3_full.png");
+}
+.narrow .welcome1,
+.narrow .welcome2,
+.narrow .welcome3{
+	background-color: #ffffff;
+	border-radius: 4vh;
+}
+.text{
+	height: 20.1vh;
+	width: calc(100% - 9.8vh);
+	margin: 4.9vh;
+	position: absolute;
+	bottom: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+}
+.text ol{
+	text-align: left;
+	padding-left: 3vh;
+}
+.text li{
+	margin-bottom: 3.4vh;
+}
+
+
+.flickity-button{
+	color: #7d11ff!important;
+	background: transparent;
+}
+.flickity-prev-next-button .flickity-button-icon{
+	width: 40%!important;
+	height: 40%!important;
+}
+.flickity-button.previous{
+	left: -7vh;
+}
+.flickity-button.next{
+	right: -7vh;
+}
+.flickity-button:hover{
+	background: transparent!important;
+}
+.flickity-button:disabled{
+	opacity: 1!important;
+	color: #c2c2ff!important;
+}
+.flickity-prev-next-button.previous .flickity-button-icon{
+	left: 0;
+}
+.flickity-prev-next-button.next .flickity-button-icon{
+	left: initial;
+	right: 0;
+}
+.flickity-button:focus{
+	box-shadow: none;
+}
+.narrow .flickity-button{
+	display: none;
+}
+.flickity-page-dots{
+	margin: 0 auto!important;
+	text-align: center!important;
+	line-height: 0.7vh!important;
+	bottom: -5vh!important;
+}
+.flickity-page-dots .dot{
+	width: 0.7vh!important;
+	height: 0.7vh!important;
+	display: inline-block!important;
+	margin: 0 0.4vh!important;
+	background-color: #c2c2ff!important;
+	border-radius: 50%!important;
+}
+.flickity-page-dots .dot.is-selected{
+	background-color: #7d11ff!important;
+}
