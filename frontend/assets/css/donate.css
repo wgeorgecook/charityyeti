@@ -1,0 +1,150 @@
+body{
+	font: 1.9vh/3.4vh 'Roboto', sans-serif;
+	font-weight: 500;
+	background-color: #f7f7ff;
+	color: #7d11ff;
+	overflow: hidden;
+}
+
+button{
+	display: inline-block;
+	cursor: pointer;
+	background-color: #7d11ff;
+	color: #ffe566;
+	border: 0;
+	padding: 1.3vh 2vh 1.5vh;
+	font-weight: 800;
+	border-radius: 2vh;
+	font-size: 2.2vh;
+	line-height: 2.2vh;
+}
+h1{
+	font: 500 5vh/5vh 'Roboto', sans-serif;
+	text-align: center;
+	margin: 0 0 6.7vh;
+}
+h2{
+	font: 500 1.9vh/3.4vh 'Roboto', sans-serif;
+	margin: 0;
+	width: 41.4vh;
+	margin: 0 auto 2.7vh;
+	padding-left: 3.6vh;
+}
+
+#js{
+	display: none;
+}
+
+#logo{
+	background: url("../imgs/logo.png") 50% no-repeat;
+	background-size: contain;
+	height: 2.2vh;
+	margin: 3.1vh auto 18.3vh;
+}
+.modal{
+	height: 51.7vh;
+	width: 41.4vh;
+	max-width: 90%;
+	margin: 0 auto;
+	position: relative;
+	background: #ffffff;
+	border-radius: 3.5vh;
+	border-radius: 4vh;
+}
+.text{
+	height: 41.9vh;
+	width: calc(100% - 9.8vh);
+	margin: 4.9vh;
+	position: absolute;
+	bottom: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+}
+.form-half{
+	display: inline-block;
+	vertical-align: top;
+	width: 50%;
+	position: relative;
+}
+.form-half,
+.form-whole{
+	margin-bottom: 3.8vh;
+}
+label{
+	display: block;
+	text-align: left;
+	padding-left: 1.3vh;
+	margin-bottom: 1vh;
+}
+input{
+	background-color: #f7f7ff;
+	color: #fcb73d;
+	font: 16px/3.4vh 'Roboto', sans-serif;
+	font-weight: 500;
+	border-radius: 1.5vh;
+	border: 0;
+	padding: 0.6vh 1.2vh;
+	width: calc(100% - 2.4vh);
+}
+input[disabled]{
+	background-color: #e0e1fe;
+	color: #b1aafb;
+	cursor: not-allowed;
+	-webkit-text-fill-color: currentcolor;
+	opacity: 1;
+}
+.hosted-field{
+	font-family: 'Roboto', sans-serif;
+	height: 3.4vh;
+	padding: 0.6vh 1.2vh;
+	border: 0;
+	border-radius: 1.5vh;
+	text-align: center;
+	background-color: #f7f7ff;
+	width: calc(100% - 2.4vh);
+}
+.form-half input,
+.form-half .hosted-field{
+	width: calc(90% - 2.4vh);
+}
+.righthalf input,
+.righthalf .hosted-field{
+	position: absolute;
+	right: 0;
+}
+.righthalf label{
+	margin-left: 1.5vh;
+}
+.lefthalf input{
+	margin-left: -1.2vh;
+}
+
+.popup{
+	z-index: 999;
+	position: fixed;
+	inset: 50% 0;
+	overflow: hidden;
+	opacity: 0;
+	transition: opacity 0.2s ease-out, inset 0.4s ease-out;
+}
+.popup .modal{
+	background-size: contain;
+	background-repeat: no-repeat;
+	height: 64.2vh;
+}
+#donate-fail .modal,
+#js-fail .modal{
+	background-image: url("../imgs/fail_full.png");
+}
+#donate-success .modal{
+	background-image: url("../imgs/success_full.png");
+}
+.popup .text{
+	height: 20.1vh;
+}
+.goldtext{
+	color: #fcb73d;
+	font-weight: 600;
+}

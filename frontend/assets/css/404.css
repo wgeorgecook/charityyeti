@@ -1,0 +1,56 @@
+body{
+	font: 500 1.9vh/3.4vh 'Roboto', sans-serif;
+	background-color: #f7f7ff;
+	color: #7d11ff;
+	overflow: hidden;
+}
+
+#logo{
+	background: url("../imgs/logo.png") 50% no-repeat;
+	background-size: contain;
+	height: 2.2vh;
+	margin: 3.1vh auto 11.3vh;
+}
+.modal{
+	background-image: url("../imgs/404.png");
+	background-size: contain;
+	background-repeat: no-repeat;
+	height: 64.2vh;
+	width: 41.4vh;
+	max-width: 90%;
+	margin: 0 auto;
+	position: relative;
+	border-radius: 4vh;
+}
+.text{
+	height: 20.1vh;
+	width: calc(100% - 9.8vh);
+	margin: 4.9vh;
+	position: absolute;
+	bottom: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+}
+button{
+	display: inline-block;
+	cursor: pointer;
+	background-color: #7d11ff;
+	color: #ffe566;
+	border: 0;
+	padding: 1.3vh 2vh 1.5vh;
+	font-weight: 800;
+	border-radius: 2vh;
+	font-size: 2.2vh;
+	line-height: 2.2vh;
+}
+#debug{
+	position: absolute;
+	bottom: 5px;
+	left: 0;
+	right: 0;
+	color: #333;
+	font-family: monospace;
+	text-align: center;
+}
