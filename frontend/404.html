@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="icon" type="image/png" sizes="192x192" href="assets/imgs/favicon.png">
+	<link rel="icon" type="image/png" sizes="128x128" href="assets/imgs/favicon.png">
+	<link rel="apple-touch-icon" type="image/png" sizes="128x128" href="assets/imgs/favicon.png">
+	<link rel="apple-touch-icon-precomposed" type="image/png" sizes="128x128" href="assets/imgs/favicon.png">
+	<title>Charity Yeti &ndash; a Twitter Bot for Rewarding Tweets</title>
+	<link href="https://fonts.googleapis.com/css?family=Roboto:500&display=swap" rel="stylesheet">
+	<link href="assets/css/404.css" rel="stylesheet">
+</head>
+
+<body>
+	<div id="logo"></div>
+	<div class="modal" id="body404">
+		<div class="text">
+			<p>Oops!<br/>Looks like you're lost.<br/>Let's head back<br/><br/><button id="notfound-btn" type="button" onclick="window.location = './'">OK</button></p>		
+		</div>
+	</div>
+	
+	<div id="debug"></div>
+	
+</body>
+
+<script>
+
+var ratio =  Math.round((document.getElementById("body404").offsetHeight / document.getElementById("body404").offsetWidth) * 100) / 100;
+if(ratio > 1.55){
+	document.getElementById("body404").style.backgroundColor = '#ffe566'
+}
+
+</script>
+
+</html>
