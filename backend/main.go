@@ -28,8 +28,8 @@ type config struct {
 	AccessSecret      string `env:"ACCESS_SECRET"`
 	Port              string `env:"PORT" envDefault:"8080"`
 	ConnectionURI     string `env:"MONGO_URI"`
-	Database          string `env:"MONGO_DATABASE"`
-	Collection        string `env:"MONGO_COLLECTION"`
+	Database          string `env:"DATABASE"`
+	Collection        string `env:"COLLECTION"`
 	BlockList         string `env:"BLOCK_LIST"`
 	SendTweets        bool   `env:"SEND_TWEETS" envDefault:"false"`
 	BearerToken       string `env:"BEARER_TOKEN"`

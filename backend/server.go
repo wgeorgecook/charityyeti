@@ -83,7 +83,6 @@ func startServer() {
 	}
 
 	// start the server
-	log.Info("Charity Yeti is now running. Please press CTRL + C to stop.")
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
 	}
