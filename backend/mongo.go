@@ -17,12 +17,14 @@ type blockedUser struct {
 }
 
 func initMongo(connectionURI string) *mongo.Client {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionURI))
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(connectionURI))
 
 	if err != nil {
 		log.Fatal("Could not connect to Mongo")
+	}
+
+	if err := client.Ping(context.Background(), nil); err != nil {
+		log.Fatal("could not maintain connection to Mongo")
 	}
 
 	return client

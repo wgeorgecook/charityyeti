@@ -104,6 +104,7 @@ func getBearerToken() (string, error) {
 	// once we have the token set the environment variable so next time we call this
 	// we can just retreive it from memory
 	cfg.BearerToken = token.AccessToken
+	log.Info("returning bearer token")
 	return token.AccessToken, nil
 
 }
@@ -149,7 +150,7 @@ func getWebhooks() ([]anaconda.WebHookResp, error) {
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
-	log.Infof("webhook response from Twitter: %v", string(body))
+	log.Infof("get webhook response from Twitter: %v", string(body))
 	if err := json.Unmarshal(body, &webhooks); err != nil {
 		log.Errorf("could not unmarshal twitter response to webhook struct: %v", err)
 		return nil, err
@@ -287,7 +288,7 @@ func deleteWebhook(webhookId string) ([]anaconda.WebHookResp, error) {
 	// oauth_token="ACCESS_TOKEN", oauth_version="1.0"'
 	log.Info("deleting webhook")
 	var webhooks []anaconda.WebHookResp
-	endpoint := fmt.Sprintf("https://api.twitter.com/1.1/account_activity/all/dev/webhooks/%v.json", webhookId)
+	endpoint := fmt.Sprintf("https://api.twitter.com/1.1/account_activity/all/%v/webhooks/%v.json", cfg.EnvironmentName, webhookId)
 	req, err := http.NewRequest(http.MethodDelete, endpoint, nil)
 	if err != nil {
 		log.Errorf("could not create request to webhook endpoint: %v", err)
@@ -305,7 +306,7 @@ func deleteWebhook(webhookId string) ([]anaconda.WebHookResp, error) {
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
-	log.Infof("webhook response from Twitter: %v", string(body))
+	log.Infof("delete webhook response from Twitter: %v", string(body))
 	if err := json.Unmarshal(body, &webhooks); err != nil {
 		log.Errorf("could not unmarshal twitter response to webhook struct: %v", err)
 		return nil, err

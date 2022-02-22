@@ -372,8 +372,9 @@ func successfulDonation(w http.ResponseWriter, r *http.Request) {
 // and makes sure that charityyeti is subscribed to that webhook
 func initWebhooks() error {
 	// first get the webhooks we already have registered
+	log.Info("init webhooks")
 	v := url.Values{}
-	v.Add("env_name",  cfg.EnvironmentName)
+	v.Add("env_name", cfg.EnvironmentName)
 	webhooks, err := getWebhooks()
 	if err != nil {
 		log.Errorf("could not get registered webhooks: %v", err)
@@ -382,13 +383,16 @@ func initWebhooks() error {
 
 	webhookId := ""
 	if len(webhooks) != 0 {
+		log.Infof("we have an existing webhook: %v", webhooks[0])
 		// checks and makes sure we're listening at the correct domain and it's valid
 		if !strings.Contains(webhooks[0].URL, cfg.WebhookCallbakURL) || !webhooks[0].Valid {
 			// we aren't registered to the current deployment, and since we can only have
 			// one webhook we need to delete the existing one, or the webhook is not valid
+			log.Info("this webhook is either registered to the wrong callback or is invalid")
 			deleteWebhook(webhooks[0].ID)
 		} else {
 			// we have a valid existing webhook
+			log.Info("we can re-use this webhook")
 			webhookId = webhooks[0].ID
 		}
 	}

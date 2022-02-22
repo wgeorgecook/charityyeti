@@ -1,13 +1,4 @@
-FROM php:7-apache
+FROM webdevops/php-nginx:7.3-alpine
 
-COPY ./frontend/apache/ports.conf /etc/apache2
-COPY ./frontend/apache/000-default.conf /etc/apache2/sites-enabled
-
-COPY ./frontend/ /var/www/html
-ADD https://developers.braintreepayments.com/client_libraries/php/braintree-php-5.4.0.tgz /var/www/html
-WORKDIR /var/www/html 
-
-RUN tar -xzf braintree-php-5.4.0.tgz && mv braintree-php-5.4.0 braintree/ && rm braintree-php-5.4.0.tgz
-RUN chown -R www-data:www-data /var/www 
-
+COPY ./frontend /app
 EXPOSE 8888

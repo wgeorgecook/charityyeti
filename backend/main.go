@@ -159,6 +159,8 @@ func main() {
 	// listen for those sweet DMs
 	go processDM()
 
+	log.Info("Charity Yeti is now running. Please press CTRL + C to stop.")
+
 	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
