@@ -11,8 +11,8 @@ if('sandbox' == BRAINTREE_ENV){
 $idmsg = '';
 $canDonate = false;
 $uri = explode('/',$_SERVER['REQUEST_URI']);
-if((count($uri) > 2) && !empty($uri[2])){
-	$id = $uri[2];
+if(isset($_GET['id']) && !empty($_GET['id'])){
+	$id = $_GET['id'];
 	if(!ctype_xdigit($id)){
 		$idmsg = "The donation link appears to be invalid.";
 	} else {
