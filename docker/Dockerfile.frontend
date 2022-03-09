@@ -1,4 +1,16 @@
-FROM webdevops/php-nginx:7.3-alpine
+FROM webdevops/php-apache:7.3-alpine
 
+# copy the front end code into the running directory in the container
 COPY ./frontend /app
+
+WORKDIR /app
+
+# download and unzip the braintree sdk
+ADD https://github.com/braintree/braintree_php/archive/refs/heads/master.zip /app/
+RUN unzip master.zip
+RUN mv braintree_php-master/ braintree/
+
+# remove the downloaded file
+RUN rm master.zip
+
 EXPOSE 8888

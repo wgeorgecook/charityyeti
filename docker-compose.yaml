@@ -4,7 +4,6 @@ services:
         build:
             context: .
             dockerfile: docker/Dockerfile.backend
-        # image: ${DOCKER_REGISTRY}/charity-yeti-test-backend:${TAG_VERSION}
         image: williamcook/charityyeti-backend:${TAG_VERSION}
         env_file: 
             - .env
