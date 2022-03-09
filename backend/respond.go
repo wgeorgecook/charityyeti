@@ -274,9 +274,7 @@ func generateSuccessfulDonationTweetText(invoker string, donation float32) strin
 // client to make sure that our responses get sent to the original invocation tweet
 func respondToDonation(tweet successfulDonationData) error {
 	tweetText := generateSuccessfulDonationTweetText(tweet.invoker, tweet.donationValue)
-	log.Debugf(fmt.Sprintf("Tweet to send: %+v", tweetText))
-	log.Debugf(fmt.Sprintf("Responding to: %v", tweet.invokerTweetID))
-
+	log.Infof("Tweet to send: %+v", tweetText)
 	var params twitter.StatusUpdateParams
 	if tweet.invokerResponseTweetID != 0 {
 		// We couldn't DM this person, so we need to respond on our tweet with the donation link
@@ -291,7 +289,7 @@ func respondToDonation(tweet successfulDonationData) error {
 	}
 
 	if cfg.SendTweets {
-		log.Infow("Actually sending this!")
+		log.Infof("Responding to: %+v", params)
 		_, _, err := twitterClient.Statuses.Update(tweetText, &params)
 
 		if err != nil {
