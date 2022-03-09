@@ -102,11 +102,11 @@ func generateResponseTweetText(link string) string {
 func respondToInvocation(yeti yetiInvokedData) error {
 	if existsInBlockList(strconv.Itoa(int(yeti.invoker.ID))) {
 		// this user asked us not to contact them so we'll skip over
-		return errors.New(fmt.Sprintf("user %v (%v) asked us not to contact them", yeti.invoker.ScreenName, yeti.invoker.ID))
+		return fmt.Errorf("user %v (%v) asked us not to contact them", yeti.invoker.ScreenName, yeti.invoker.ID)
 	}
 	if yeti.honorary.ScreenName != "" {
 		dataID := primitive.NewObjectID()
-		donateLink := fmt.Sprintf("%v?id=%v", cfg.PublicURL, dataID.Hex()) // TODO: change this to production
+		donateLink := fmt.Sprintf("%v/donate/%v", cfg.PublicURL, dataID.Hex()) // TODO: change this to production
 		tweetText := generateResponseTweetText(donateLink)
 
 		if cfg.SendTweets {
@@ -236,11 +236,11 @@ func generateSuccessfulDonationTweetText(invoker string, donation float32) strin
 		"*Excited Yeti Noises*",
 	}
 	thanks := []string{
-		fmt.Sprintf("Thanks to this extremely excellent tweet @%v donated $%v to Partners in Health!", invoker, donation),
-		fmt.Sprintf("@%v thought your tweet was so great, they donated $%v to Partners in Health to celebrate!", invoker, donation),
-		fmt.Sprintf("@%v loved your tweet so much they gave $%v to Partners in Health to show some gratitude!", invoker, donation),
-		fmt.Sprintf("@%v donated $%v to Partners because your tweet was THAT GOOD.", invoker, donation),
-		fmt.Sprintf("Partners In Health has $%v extra thanks to this awesome tweet that @%v loved so much.", donation, invoker),
+		fmt.Sprintf("Thanks to this extremely excellent tweet @%v donated to Partners in Health!", invoker),
+		fmt.Sprintf("@%v thought your tweet was so great, they gave to Partners in Health to celebrate!", invoker),
+		fmt.Sprintf("@%v loved your tweet so much they gave to Partners in Health to show some gratitude!", invoker),
+		fmt.Sprintf("@%v donated to Partners because your tweet was THAT GOOD.", invoker),
+		fmt.Sprintf("Partners In Health has some extra funds thanks to this awesome tweet that @%v loved so much.", invoker),
 	}
 
 	congrats := []string{
