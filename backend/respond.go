@@ -106,7 +106,7 @@ func respondToInvocation(yeti yetiInvokedData) error {
 	}
 	if yeti.honorary.ScreenName != "" {
 		dataID := primitive.NewObjectID()
-		donateLink := fmt.Sprintf("%v/donate/%v", cfg.PublicURL, dataID.Hex()) // TODO: change this to production
+		donateLink := fmt.Sprintf("%v/donate?id=%v", cfg.PublicURL, dataID.Hex())
 		tweetText := generateResponseTweetText(donateLink)
 
 		if cfg.SendTweets {
