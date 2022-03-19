@@ -37,7 +37,7 @@ func processInvocation() {
 			honorary := getInReplyToTwitterUser(int64(incomingTweet.TweetCreateEvents[0].InReplyToUserID))
 
 			yeti := yetiInvokedData{
-				invoker:         incomingTweet.TweetCreateEvents[0].User,
+				invoker:         fullUserToSmallUser(incomingTweet.TweetCreateEvents[0].User),
 				honorary:        honorary,
 				invokerTweetID:  incomingTweet.TweetCreateEvents[0].ID,
 				originalTweetID: incomingTweet.TweetCreateEvents[0].InReplyToStatusID,
@@ -54,15 +54,20 @@ func processInvocation() {
 
 // generateResponseTweetText mixes and matches response words to generate some different, human sounding phrases
 // to make us look less spammy
-func generateResponseTweetText(link string) string {
+func generateResponseTweetText(link, replyToUserName string) string {
+	// add a space around the replyToUserName if it's included
+	// to make formatting down below work better
+	if replyToUserName != "" {
+		replyToUserName = fmt.Sprintf(" @%v", replyToUserName)
+	}
 	// our message strings we're gonna mix and match
 	greetings := []string{
-		"Hey there!",
-		"Hello!",
-		"Hi!",
-		"Glad you reached out!",
-		"Howdy!",
-		"*Excited Yeti Noises*",
+		fmt.Sprintf("Hey there%v!", replyToUserName),
+		fmt.Sprintf("Hello%v!", replyToUserName),
+		fmt.Sprintf("Hi%v!", replyToUserName),
+		fmt.Sprintf("Glad you reached out%v!", replyToUserName),
+		fmt.Sprintf("Howdy %v!", replyToUserName),
+		fmt.Sprintf("*Excited Yeti Noises*%v", replyToUserName),
 	}
 	thanks := []string{
 		"Thanks for reaching out.",
@@ -89,7 +94,7 @@ func generateResponseTweetText(link string) string {
 	tweetText := fmt.Sprintf("%v %v %v %v\nReply 'STOP' to opt out.", greetings[greetingsIdx], thanks[thanksIdx], callToAction[callToActionIdx], link)
 	if len(tweetText) > 240 {
 		log.Errorf("Tweet/DM text is too long. Cannot exceed 240 but we made a %v character long string", len(tweetText))
-		return generateResponseTweetText(link)
+		return generateResponseTweetText(link, replyToUserName)
 	} else {
 		return tweetText
 	}
@@ -100,90 +105,91 @@ func generateResponseTweetText(link string) string {
 // Charity Yeti website. The donation link includes an id for a Mongo document for the front end to retrieve and add
 // on the donation value after a successful donation.
 func respondToInvocation(yeti yetiInvokedData) error {
-	if existsInBlockList(strconv.Itoa(int(yeti.invoker.ID))) {
+	if existsInBlockList(yeti.invoker.IDStr) {
 		// this user asked us not to contact them so we'll skip over
-		return fmt.Errorf("user %v (%v) asked us not to contact them", yeti.invoker.ScreenName, yeti.invoker.ID)
+		return fmt.Errorf("user %v (%v) asked us not to contact them", yeti.invoker.ScreenName, yeti.invoker.IDStr)
 	}
-	if yeti.honorary.ScreenName != "" {
-		dataID := primitive.NewObjectID()
-		donateLink := fmt.Sprintf("%v/donate?id=%v", cfg.PublicURL, dataID.Hex())
-		tweetText := generateResponseTweetText(donateLink)
 
-		if cfg.SendTweets {
-			// create the record in Mongo
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			data := bson.M{
-				"_id":             dataID,
-				"invoker":         yeti.invoker,
-				"honorary":        yeti.honorary,
-				"invokerTweetID":  yeti.invokerTweetID,
-				"originalTweetID": yeti.originalTweetID,
-			}
-			log.Infow("Creating mongo document")
-			collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
-			_, err := collection.InsertOne(ctx, data)
+	if yeti.honorary.ScreenName == "" || yeti.honorary.ID == 0 {
+		/* TODO:
+		Right now, Charity Yeti only works if the invoker is **responding** to a tweet. We can't properly handle a case
+		where a user retweets with comment because there's not a tweet.InResponseTo attribute. Having this in response
+		to attribute is the only mechanism we presently have to detect and track *who* the invoker wants to credit their
+		donation for. There may be other attributes (I haven't looked into what data we can get from a retweeted tweet,
+		but it is probably similar), but we should decide if we want to interact with both replies and retweeted tweets.
+		See issue #4 for discussion.
+		*/
+		return errors.New("no honorary to respond to")
+	}
 
-			if err != nil {
-				log.Errorf(fmt.Sprintf("could not create Mongo document: %v", err))
-			}
+	dataID := primitive.NewObjectID()
+	donateLink := fmt.Sprintf("%v/donate?id=%v", cfg.PublicURL, dataID.Hex())
+	tweetText := generateResponseTweetText(donateLink, "")
 
-			// send the tweet
-			log.Infow("Actually sending this!")
+	if cfg.SendTweets {
+		// create the record in Mongo
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		data := bson.M{
+			"_id":             dataID,
+			"invoker":         yeti.invoker,
+			"honorary":        yeti.honorary,
+			"invokerTweetID":  yeti.invokerTweetID,
+			"originalTweetID": yeti.originalTweetID,
+		}
+		log.Infow("Creating mongo document")
+		collection := mongoClient.Database(cfg.Database).Collection(cfg.Collection)
+		_, err := collection.InsertOne(ctx, data)
 
-			// send a DM
-			_, _, err = twitterClient.DirectMessages.EventsNew(&twitter.DirectMessageEventsNewParams{
-				Event: &twitter.DirectMessageEvent{
-					Type: "message_create",
-					Message: &twitter.DirectMessageEventMessage{
-						Target: &twitter.DirectMessageTarget{
-							RecipientID: strconv.Itoa(int(yeti.invoker.ID)),
-						},
-						Data: &twitter.DirectMessageData{
-							Text: tweetText,
-						},
-					},
-				},
-			})
-
-			if err != nil {
-				log.Errorf("Could not send a DM: %v", err)
-				// if we can't send a DM (like they have DMs off or something), we fall back on a good old fashioned tweet reply
-				params := twitter.StatusUpdateParams{InReplyToStatusID: yeti.invokerTweetID}
-				responseTweet, _, err := twitterClient.Statuses.Update(tweetText, &params)
-				if err != nil {
-					return err
-				}
-
-				// now that we have a response tweet, we need to save it's ID back to the db so we can reply to this later
-				update := bson.M{
-					"$set": bson.M{"invokerResponseTweetID": &responseTweet.ID},
-				}
-
-				filter := bson.M{"_id": dataID}
-
-				_, err = collection.UpdateOne(ctx, filter, update)
-				if err != nil {
-					log.Errorf("could not update document with this responded tweet ID: %v", err)
-					return err
-				}
-			}
+		if err != nil {
+			log.Errorf(fmt.Sprintf("could not create Mongo document: %v", err))
 		}
 
-		log.Info(tweetText)
+		// send the tweet
+		log.Infow("Actually sending this!")
 
-		return nil
+		// send a DM
+		_, _, err = twitterClient.DirectMessages.EventsNew(&twitter.DirectMessageEventsNewParams{
+			Event: &twitter.DirectMessageEvent{
+				Type: "message_create",
+				Message: &twitter.DirectMessageEventMessage{
+					Target: &twitter.DirectMessageTarget{
+						RecipientID: yeti.invoker.IDStr,
+					},
+					Data: &twitter.DirectMessageData{
+						Text: tweetText,
+					},
+				},
+			},
+		})
+
+		if err != nil {
+			log.Errorf("Could not send a DM: %v", err)
+			// if we can't send a DM (like they have DMs off or something), we fall back on a good old fashioned tweet reply
+			tweetText = generateResponseTweetText(donateLink, yeti.invoker.ScreenName)
+			responseTweet, err := sendTweet(tweetText, yeti.invokerTweetID)
+			if err != nil {
+				return err
+			}
+
+			// now that we have a response tweet, we need to save it's ID back to the db so we can reply to this later
+			update := bson.M{
+				"$set": bson.M{"invokerResponseTweetID": &responseTweet.ID},
+			}
+
+			filter := bson.M{"_id": dataID}
+
+			_, err = collection.UpdateOne(ctx, filter, update)
+			if err != nil {
+				log.Errorf("could not update document with this responded tweet ID: %v", err)
+				return err
+			}
+		}
 	}
 
-	/* TODO:
-	Right now, Charity Yeti only works if the invoker is **responding** to a tweet. We can't properly handle a case
-	where a user retweets with comment because there's not a tweet.InResponseTo attribute. Having this in response
-	to attribute is the only mechanism we presently have to detect and track *who* the invoker wants to credit their
-	donation for. There may be other attributes (I haven't looked into what data we can get from a retweeted tweet,
-	but it is probably similar), but we should decide if we want to interact with both replies and retweeted tweets.
-	See issue #4 for discussion.
-	*/
-	return errors.New("no honorary to respond to")
+	log.Info(tweetText)
+
+	return nil
 }
 
 // goodDonation gets called when BrainTree returns an OK transaction back to us from the frontend
@@ -275,23 +281,18 @@ func generateSuccessfulDonationTweetText(invoker string, donation float32) strin
 func respondToDonation(tweet successfulDonationData) error {
 	tweetText := generateSuccessfulDonationTweetText(tweet.invoker, tweet.donationValue)
 	log.Infof("Tweet to send: %+v", tweetText)
-	var params twitter.StatusUpdateParams
+	var replyTo int64
 	if tweet.invokerResponseTweetID != 0 {
 		// We couldn't DM this person, so we need to respond on our tweet with the donation link
-		params = twitter.StatusUpdateParams{
-			InReplyToStatusID: tweet.invokerResponseTweetID,
-		}
+		replyTo = tweet.invokerResponseTweetID
 	} else {
 		// This was from a DM, so we need to respond on the invoker's tweet
-		params = twitter.StatusUpdateParams{
-			InReplyToStatusID: tweet.invokerTweetID,
-		}
+		replyTo = tweet.invokerTweetID
 	}
 
 	if cfg.SendTweets {
-		log.Infof("Responding to: %+v", params)
-		_, _, err := twitterClient.Statuses.Update(tweetText, &params)
-
+		log.Infof("Responding to: %+v", replyTo)
+		_, err := sendTweet(tweetText, replyTo)
 		if err != nil {
 			return err
 		}

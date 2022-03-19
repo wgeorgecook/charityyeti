@@ -42,8 +42,8 @@ type config struct {
 
 // type to gather tweet data from an invocation of @CharityYeti
 type yetiInvokedData struct {
-	invoker         *twitter.User
-	honorary        *twitter.User
+	invoker         *User
+	honorary        *User
 	invokerTweetID  int64
 	originalTweetID int64
 }
@@ -60,26 +60,22 @@ type successfulDonationData struct {
 
 // data we keep in Mongo
 type charityYetiData struct {
-	ID                     string        `json:"_id" bson:"_id"`
-	OriginalTweetID        int64         `json:"originalTweetID,omitempty" bson:"originalTweetID,omitempty"`
-	InvokerTweetID         int64         `json:"invokerTweetID,omitempty" bson:"invokerTweetID,omitempty"`
-	Invoker                *twitter.User `json:"invoker,omitempty" bson:"invoker,omitempty"`
-	Honorary               *twitter.User `json:"honorary,omitempty" bson:"honorary,omitempty"`
-	DonationValue          float32       `json:"donationValue,omitempty" bson:"donationValue,omitempty"`
-	DonationID             string        `json:"donationID,omitempty" bson:"donationID,omitempty"`
-	InvokerResponseTweetID int64         `json:"invokerResponseTweetID,omitempty" bson:"invokerResponseTweetID,omitempty"`
-}
-
-// aggregated Mongo data
-type charityYetiAggregation struct {
-	Map []charityYetiData `bson:"map"`
+	ID                     string  `json:"_id" bson:"_id"`
+	OriginalTweetID        int64   `json:"originalTweetID,omitempty" bson:"originalTweetID,omitempty"`
+	InvokerTweetID         int64   `json:"invokerTweetID,omitempty" bson:"invokerTweetID,omitempty"`
+	Invoker                *User   `json:"invoker,omitempty" bson:"invoker,omitempty"`
+	Honorary               *User   `json:"honorary,omitempty" bson:"honorary,omitempty"`
+	DonationValue          float32 `json:"donationValue,omitempty" bson:"donationValue,omitempty"`
+	DonationID             string  `json:"donationID,omitempty" bson:"donationID,omitempty"`
+	InvokerResponseTweetID int64   `json:"invokerResponseTweetID,omitempty" bson:"invokerResponseTweetID,omitempty"`
 }
 
 type User struct {
-	Email      *string `json:"email,omitempty" bson:"email,omitempty"`
-	ID         int64   `json:"id,omitempty" bson:"id,omitempty"`
-	Name       string  `json:"name,omitempty" bson:"name,omitempty"`
-	ScreenName string  `json:"screen_name,omitempty" bson:"screen_name,omitempty"`
+	Email      string `json:"email,omitempty" bson:"email,omitempty"`
+	ID         int64  `json:"id,omitempty" bson:"id,omitempty"`
+	IDStr      string `json:"id_str,omitempty" bson:"id_str,omitempty"`
+	Name       string `json:"name,omitempty" bson:"name,omitempty"`
+	ScreenName string `json:"screen_name,omitempty" bson:"screen_name,omitempty"`
 }
 
 var srv *http.Server
