@@ -54,15 +54,20 @@ func processInvocation() {
 
 // generateResponseTweetText mixes and matches response words to generate some different, human sounding phrases
 // to make us look less spammy
-func generateResponseTweetText(link string) string {
+func generateResponseTweetText(link, replyToUserName string) string {
+	// add a space around the replyToUserName if it's included
+	// to make formatting down below work better
+	if replyToUserName != "" {
+		replyToUserName = fmt.Sprintf(" @%v", replyToUserName)
+	}
 	// our message strings we're gonna mix and match
 	greetings := []string{
-		"Hey there!",
-		"Hello!",
-		"Hi!",
-		"Glad you reached out!",
-		"Howdy!",
-		"*Excited Yeti Noises*",
+		fmt.Sprintf("Hey there%v!", replyToUserName),
+		fmt.Sprintf("Hello%v!", replyToUserName),
+		fmt.Sprintf("Hi%v!", replyToUserName),
+		fmt.Sprintf("Glad you reached out%v!", replyToUserName),
+		fmt.Sprintf("Howdy %v!", replyToUserName),
+		fmt.Sprintf("*Excited Yeti Noises*%v", replyToUserName),
 	}
 	thanks := []string{
 		"Thanks for reaching out.",
@@ -89,7 +94,7 @@ func generateResponseTweetText(link string) string {
 	tweetText := fmt.Sprintf("%v %v %v %v\nReply 'STOP' to opt out.", greetings[greetingsIdx], thanks[thanksIdx], callToAction[callToActionIdx], link)
 	if len(tweetText) > 240 {
 		log.Errorf("Tweet/DM text is too long. Cannot exceed 240 but we made a %v character long string", len(tweetText))
-		return generateResponseTweetText(link)
+		return generateResponseTweetText(link, replyToUserName)
 	} else {
 		return tweetText
 	}
@@ -119,7 +124,7 @@ func respondToInvocation(yeti yetiInvokedData) error {
 
 	dataID := primitive.NewObjectID()
 	donateLink := fmt.Sprintf("%v/donate?id=%v", cfg.PublicURL, dataID.Hex())
-	tweetText := generateResponseTweetText(donateLink)
+	tweetText := generateResponseTweetText(donateLink, "")
 
 	if cfg.SendTweets {
 		// create the record in Mongo
@@ -161,6 +166,7 @@ func respondToInvocation(yeti yetiInvokedData) error {
 		if err != nil {
 			log.Errorf("Could not send a DM: %v", err)
 			// if we can't send a DM (like they have DMs off or something), we fall back on a good old fashioned tweet reply
+			tweetText = generateResponseTweetText(donateLink, yeti.invoker.ScreenName)
 			responseTweet, err := sendTweet(tweetText, yeti.invokerTweetID)
 			if err != nil {
 				return err
