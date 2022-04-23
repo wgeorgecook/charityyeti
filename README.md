@@ -1,4 +1,7 @@
-# Raise Money For Partners In Health
+# Charity Yeti
+![Charity Yeti logo on a dark to light purple gradient. The logo is a circle with a white cartoonish Yeti holding a bird in its hand. The bird, also white and cartoonish, holds a gold coin in its beak.](https://mir-s3-cdn-cf.behance.net/project_modules/fs/781d45142032917.625f598dabf08.jpg)
+
+## Raise Money For Partners In Health
 
 For the past decade, the Vlogbrothers and Nerdfigtheria continuously support Partners In Health as a beneificiary of the annual [Project for Awesome](http://www.projectforawesome.com). In 2019, Hank and John started an inititive to fund a new maternal care facility in Sierra Leon to help reduce maternal morality in the Kona district, where Partners In Health works tirelessly to improve healthcare.
 
