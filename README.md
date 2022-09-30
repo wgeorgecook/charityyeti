@@ -1,3 +1,12 @@
+# Project is End of Life
+A message from Hank:
+```
+Hey y'all. I went through a lot of thoughts on this project, where it is right now, and also realized that where I was (and where Twitter was) when we started out are pretty different than where those things are today. I think the wise call is to hope that we have all learned lots and been happy to have had this community together, but to call off the project.
+It's a bummer because so much cool work and thought went into it. And of course you can use anything we've done here in public portfolios of your work if that's interesting or helpful. Thanks everyone so much for working on this together.
+```
+
+While this is indeed a bit of a bummer, I also think this is the correct decision. Turns out there are lots of hurdles to raise money and without a dedicated team with the right know-how, it's hard to get done. I may work on getting a copy of this running somewhere for demonstration purposes, but that's tbd. Thank you to Tamar and Jeff for all your hard work, 
+and the team at Complexly for helping us through this as you could! 
 # Raise Money For Partners In Health
 
 For the past decade, the Vlogbrothers and Nerdfigtheria continuously support Partners In Health as a beneificiary of the annual [Project for Awesome](http://www.projectforawesome.com). In 2019, Hank and John started an inititive to fund a new maternal care facility in Sierra Leon to help reduce maternal morality in the Kona district, where Partners In Health works tirelessly to improve healthcare.
