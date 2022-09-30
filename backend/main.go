@@ -87,6 +87,7 @@ var retweetGoods bool
 var log *zap.SugaredLogger
 var cfg config
 var mongoClient *mongo.Client
+var rateLimitService *twitter.RateLimitService
 
 func init() {
 	// Configure logging
@@ -126,6 +127,9 @@ func main() {
 	// Configure global Twitter twitterClient
 	log.Info("Configuring Twitter twitterClient")
 	twitterClient = twitter.NewClient(httpClient)
+
+	// start the twitter rate limit service
+	rateLimitService = initRateLimitService()
 
 	// check if we're going to send tweets
 	if cfg.SendTweets {
