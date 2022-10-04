@@ -13,4 +13,4 @@ RUN mv braintree_php-master/ braintree/
 # remove the downloaded file
 RUN rm master.zip
 
-EXPOSE 8888
+EXPOSE 8082
