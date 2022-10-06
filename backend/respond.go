@@ -123,7 +123,7 @@ func respondToInvocation(yeti yetiInvokedData) error {
 	}
 
 	dataID := primitive.NewObjectID()
-	donateLink := fmt.Sprintf("%v/donate?id=%v", cfg.PublicURL, dataID.Hex())
+	donateLink := fmt.Sprintf("%v/donate/?id=%v", cfg.PublicURL, dataID.Hex())
 	tweetText := generateResponseTweetText(donateLink, "")
 
 	if cfg.SendTweets {
